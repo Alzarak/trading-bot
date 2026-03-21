@@ -1,0 +1,10 @@
+{
+  "name": "trading-bot",
+  "version": "0.1.0",
+  "description": "Autonomous stock day trading bot for Alpaca Markets",
+  "author": {
+    "name": "Trading Bot"
+  },
+  "license": "MIT",
+  "keywords": ["trading", "alpaca", "stocks", "autonomous", "day-trading"]
+}

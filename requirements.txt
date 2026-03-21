@@ -1,0 +1,9 @@
+alpaca-py==0.43.2
+pandas-ta==0.4.71b0
+pandas>=2.0
+numpy>=1.26
+APScheduler>=3.10,<4.0
+pydantic-settings>=2.0
+loguru>=0.7
+python-dotenv>=1.0
+rich>=13.0
