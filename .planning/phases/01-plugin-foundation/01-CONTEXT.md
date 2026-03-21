@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-This phase delivers the complete Claude Code plugin scaffold and an interactive `/initialize` setup wizard. Users can install the plugin, run `/initialize`, answer adaptive questions based on their experience level, and receive a valid `config.json` that all downstream commands consume. The Alpaca MCP server is wired in and Python dependencies install automatically on session start.
+This phase delivers the complete Claude Code plugin scaffold and an interactive `/initialize` setup wizard. Users can install the plugin, run `/initialize`, answer adaptive questions based on their experience level, and receive a valid `config.json` that all downstream commands consume. Python dependencies install automatically on session start. No MCP server — all Alpaca access is SDK-only via alpaca-py in generated scripts.
 
 </domain>
 
@@ -34,7 +34,7 @@ This phase delivers the complete Claude Code plugin scaffold and an interactive 
 ### Plugin Bootstrap & Dependencies
 - SessionStart hook installs deps via `uv pip install` into `${CLAUDE_PLUGIN_DATA}/venv`
 - Dep reinstall triggered by diffing `requirements.txt` hash against cached hash in plugin data dir
-- Static `.mcp.json` referencing `uvx alpaca-mcp-server` with env var placeholders for API keys
+- No MCP server — all Alpaca access goes through alpaca-py SDK in Python scripts; Claude reads bot output/logs for analysis
 
 ### Claude's Discretion
 No items deferred to Claude's discretion — all areas resolved.
@@ -57,7 +57,6 @@ No items deferred to Claude's discretion — all areas resolved.
 
 ### Integration Points
 - `${CLAUDE_PLUGIN_DATA}` for persistent plugin storage (config, venv, logs)
-- Alpaca MCP server via .mcp.json
 - Requirements.txt for Python dependency management
 - .env file for API key management
 
