@@ -147,13 +147,80 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (To be filled by roadmapper) | | |
+| CMD-01 | Phase 1 | Pending |
+| CMD-02 | Phase 1 | Pending |
+| CMD-03 | Phase 1 | Pending |
+| CMD-04 | Phase 1 | Pending |
+| CMD-05 | Phase 1 | Pending |
+| CMD-06 | Phase 4 | Pending |
+| CMD-07 | Phase 4 | Pending |
+| CMD-08 | Phase 4 | Pending |
+| CMD-09 | Phase 4 | Pending |
+| CMD-10 | Phase 5 | Pending |
+| CMD-11 | Phase 5 | Pending |
+| CMD-12 | Phase 1 | Pending |
+| ALP-01 | Phase 1 | Pending |
+| ALP-02 | Phase 1 | Pending |
+| ALP-03 | Phase 1 | Pending |
+| ALP-04 | Phase 1 | Pending |
+| ALP-05 | Phase 3 | Pending |
+| ORD-01 | Phase 3 | Pending |
+| ORD-02 | Phase 3 | Pending |
+| ORD-03 | Phase 3 | Pending |
+| ORD-04 | Phase 3 | Pending |
+| ORD-05 | Phase 3 | Pending |
+| POS-01 | Phase 2 | Pending |
+| POS-02 | Phase 2 | Pending |
+| POS-03 | Phase 3 | Pending |
+| POS-04 | Phase 3 | Pending |
+| RISK-01 | Phase 2 | Pending |
+| RISK-02 | Phase 2 | Pending |
+| RISK-03 | Phase 2 | Pending |
+| RISK-04 | Phase 2 | Pending |
+| RISK-05 | Phase 2 | Pending |
+| TA-01 | Phase 3 | Pending |
+| TA-02 | Phase 3 | Pending |
+| TA-03 | Phase 3 | Pending |
+| TA-04 | Phase 3 | Pending |
+| TA-05 | Phase 3 | Pending |
+| TA-06 | Phase 3 | Pending |
+| STRAT-01 | Phase 3 | Pending |
+| STRAT-02 | Phase 3 | Pending |
+| STRAT-03 | Phase 3 | Pending |
+| STRAT-04 | Phase 3 | Pending |
+| STRAT-05 | Phase 3 | Pending |
+| AI-01 | Phase 5 | Pending |
+| AI-02 | Phase 5 | Pending |
+| AI-03 | Phase 5 | Pending |
+| AI-04 | Phase 5 | Pending |
+| AI-05 | Phase 5 | Pending |
+| PLUG-01 | Phase 1 | Pending |
+| PLUG-02 | Phase 5 | Pending |
+| PLUG-03 | Phase 2 | Pending |
+| PLUG-04 | Phase 5 | Pending |
+| PLUG-05 | Phase 1 | Pending |
+| PLUG-06 | Phase 1 | Pending |
+| PLUG-07 | Phase 2 | Pending |
+| PLUG-08 | Phase 1 | Pending |
+| OBS-01 | Phase 3 | Pending |
+| OBS-02 | Phase 3 | Pending |
+| OBS-03 | Phase 6 | Pending |
+| OBS-04 | Phase 6 | Pending |
+| OBS-05 | Phase 6 | Pending |
+| STATE-01 | Phase 3 | Pending |
+| STATE-02 | Phase 3 | Pending |
+| STATE-03 | Phase 1 | Pending |
+| DIST-01 | Phase 6 | Pending |
+| DIST-02 | Phase 6 | Pending |
+| DIST-03 | Phase 6 | Pending |
+| DIST-04 | Phase 4 | Pending |
+| DIST-05 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 57 total
-- Mapped to phases: 0
-- Unmapped: 57
+- v1 requirements: 68 total
+- Mapped to phases: 68
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-21*
-*Last updated: 2026-03-21 after initial definition*
+*Last updated: 2026-03-21 after roadmap creation — traceability complete*
