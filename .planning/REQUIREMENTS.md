@@ -1,0 +1,159 @@
+# Requirements: Trading Bot Plugin
+
+**Defined:** 2026-03-21
+**Core Value:** After initial setup, the bot trades autonomously without human intervention — scanning markets, making decisions (using Claude for analysis), and executing trades on a loop.
+
+## v1 Requirements
+
+Requirements for initial release. Each maps to roadmap phases.
+
+### Plugin Commands
+
+- [ ] **CMD-01**: User can run `/initialize` to start an interactive setup wizard that captures all trading preferences
+- [ ] **CMD-02**: Initialize wizard adapts questions based on beginner vs expert user
+- [ ] **CMD-03**: Initialize wizard captures: risk tolerance, budget, paper vs live, autonomy level, strategies, market hours, ticker watchlist
+- [ ] **CMD-04**: Initialize wizard includes autonomous risk mode option where Claude decides aggression per trade
+- [ ] **CMD-05**: Initialize wizard outputs a complete config file that all other commands consume
+- [ ] **CMD-06**: User can run `/build` to generate all Python trading scripts from initialize config
+- [ ] **CMD-07**: Build command generates tailored scripts based on selected strategies and preferences
+- [ ] **CMD-08**: Build command enforces `.env` pattern for API keys — never writes literal secrets to generated files
+- [ ] **CMD-09**: Build command auto-creates `.gitignore` with `.env` and sensitive files excluded
+- [ ] **CMD-10**: User can run `/run` to start the autonomous trading loop
+- [ ] **CMD-11**: Run command supports both Claude Code agent mode and standalone Python execution
+- [ ] **CMD-12**: User can select from momentum, mean reversion, breakout, and VWAP strategies during initialize
+
+### Alpaca Integration
+
+- [ ] **ALP-01**: Plugin authenticates with Alpaca API using environment variables (paper and live keys)
+- [ ] **ALP-02**: Plugin supports paper trading mode with Alpaca's paper endpoint
+- [ ] **ALP-03**: Plugin supports live trading mode with Alpaca's live endpoint
+- [ ] **ALP-04**: Alpaca MCP server is configured in `.mcp.json` for real-time market data access within Claude
+- [ ] **ALP-05**: Plugin queries Alpaca market clock to enforce market hours (9:30am-4:00pm ET)
+
+### Order Management
+
+- [ ] **ORD-01**: Bot can submit market orders for immediate execution
+- [ ] **ORD-02**: Bot can submit limit orders for controlled entry price
+- [ ] **ORD-03**: Bot can submit bracket orders (entry + stop-loss + take-profit in one call)
+- [ ] **ORD-04**: Bot can submit trailing stop-loss orders to lock in profits
+- [ ] **ORD-05**: Bot uses ATR-based dynamic stop placement that scales with volatility
+
+### Position Management
+
+- [ ] **POS-01**: Bot sizes positions as percentage of account equity (configurable)
+- [ ] **POS-02**: Bot enforces maximum position count limit
+- [ ] **POS-03**: Bot closes or logs all open positions on graceful shutdown (SIGINT/SIGTERM)
+- [ ] **POS-04**: Bot reconciles local state against Alpaca's actual positions on startup (crash recovery)
+
+### Risk Management
+
+- [ ] **RISK-01**: Bot halts all trading when daily drawdown exceeds configured threshold (circuit breaker)
+- [ ] **RISK-02**: Bot tracks day trade count and warns/blocks when approaching PDT limit (4 trades per 5 days under $25K)
+- [ ] **RISK-03**: Bot wraps all API calls with exponential backoff and retry logic
+- [ ] **RISK-04**: Bot handles network failures during order submission without creating ghost positions
+- [ ] **RISK-05**: Claude dynamically adjusts aggression (position size, entry thresholds) based on market conditions and recent performance
+
+### Technical Analysis
+
+- [ ] **TA-01**: Bot computes RSI indicator on configured timeframe
+- [ ] **TA-02**: Bot computes MACD indicator (signal line, histogram)
+- [ ] **TA-03**: Bot computes EMA (exponential moving average) for trend detection
+- [ ] **TA-04**: Bot computes ATR (average true range) for volatility-based stops
+- [ ] **TA-05**: Bot computes Bollinger Bands for mean reversion signals
+- [ ] **TA-06**: Bot computes VWAP for intraday price reference
+
+### Trading Strategies
+
+- [ ] **STRAT-01**: Momentum strategy — enters on strong RSI + MACD confirmation, exits on reversal signals
+- [ ] **STRAT-02**: Mean reversion strategy — enters on oversold/overbought extremes, exits on return to mean
+- [ ] **STRAT-03**: Breakout strategy — enters on volume-confirmed price breakouts, exits on failed continuation
+- [ ] **STRAT-04**: VWAP reversion strategy — enters on significant deviation from VWAP, exits on reversion
+- [ ] **STRAT-05**: Each strategy is a configurable module selectable via config
+
+### Claude AI Integration
+
+- [ ] **AI-01**: Claude analyzes each trade opportunity with structured JSON output (action, confidence, reasoning)
+- [ ] **AI-02**: Claude accesses real-time market data via Alpaca MCP server during analysis
+- [ ] **AI-03**: Claude operates as strategy-level analyst — never submits orders directly
+- [ ] **AI-04**: All Claude recommendations pass through deterministic Python risk manager before execution
+- [ ] **AI-05**: Claude's reasoning is logged for every trade decision (inspectable audit trail)
+
+### Plugin Architecture
+
+- [ ] **PLUG-01**: Plugin follows Claude Code plugin directory structure (commands/, agents/, skills/, hooks/)
+- [ ] **PLUG-02**: Separate agent for market scanning/analysis
+- [ ] **PLUG-03**: Separate agent for risk management validation
+- [ ] **PLUG-04**: Separate agent for trade execution
+- [ ] **PLUG-05**: Trading rules skill provides domain context to all agents
+- [ ] **PLUG-06**: SessionStart hook installs Python dependencies into plugin data directory
+- [ ] **PLUG-07**: PreToolUse hook validates safety constraints before order submission
+- [ ] **PLUG-08**: Reference files document trading strategies, risk rules, and Alpaca API patterns
+
+### Observability
+
+- [ ] **OBS-01**: Bot logs every trade to file (timestamp, ticker, action, price, quantity, P&L)
+- [ ] **OBS-02**: Bot tracks portfolio P&L (daily and total return) using Alpaca account endpoint
+- [ ] **OBS-03**: Bot generates end-of-day summary report (P&L, trades taken, win rate, biggest winner/loser)
+- [ ] **OBS-04**: Bot sends notifications on key events (circuit breaker fired, daily summary, large win/loss)
+- [ ] **OBS-05**: Notification channels configurable (Slack webhook, email)
+
+### State Management
+
+- [ ] **STATE-01**: Bot persists trading state to SQLite database (positions, orders, trade history)
+- [ ] **STATE-02**: Bot recovers from crashes by reconciling SQLite state against Alpaca positions
+- [ ] **STATE-03**: Bot maintains configuration in JSON file editable without code changes
+
+### Distribution
+
+- [ ] **DIST-01**: Plugin is installable via `claude plugin install` from marketplace
+- [ ] **DIST-02**: Plugin includes `plugin.json` manifest with version, description, dependencies
+- [ ] **DIST-03**: Plugin is publishable to Claude Code plugin marketplace via GitHub
+- [ ] **DIST-04**: Generated Python scripts can run standalone on a VPS/server without Claude Code
+- [ ] **DIST-05**: Standalone mode includes cron/systemd setup instructions or scripts
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Enhanced Analysis
+
+- **ANAL-01**: News sentiment analysis via Alpaca's news endpoint for signal confirmation
+- **ANAL-02**: Self-improving strategy tuning based on historical performance data
+
+### Expanded Markets
+
+- **MKT-01**: Cryptocurrency trading via Alpaca's crypto API
+- **MKT-02**: Extended hours trading (pre-market/after-hours)
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Backtesting engine | Full backtesting (slippage, fills, spread) is a product in itself; paper trading is the honest equivalent |
+| Web dashboard / UI | Adds web server, frontend, auth — this is a CLI plugin, not SaaS; use Alpaca's built-in dashboard |
+| WebSocket streaming | REST polling on 1-min bars is sufficient for day trading strategies in scope; WebSockets add reconnect complexity |
+| Multiple broker support | Each broker has different APIs/fills; doubles testing surface; Alpaca is free with no commissions |
+| Options trading | Fundamentally different domain (Greeks, expiry, margin); overwhelming complexity |
+| Leverage / margin trading | Margin calls can liquidate accounts; contradicts "safe to run unattended" constraint |
+| Social / copy trading | Privacy and regulatory complexity (investment advice laws); requires backend + moderation |
+| Social media sentiment | Expensive/unreliable APIs; low predictive value for single-day trades; Alpaca news endpoint is sufficient |
+| Custom ML model training | Requires datasets, validation pipelines, overfitting prevention; Claude's LLM judgment is the differentiator |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| (To be filled by roadmapper) | | |
+
+**Coverage:**
+- v1 requirements: 57 total
+- Mapped to phases: 0
+- Unmapped: 57
+
+---
+*Requirements defined: 2026-03-21*
+*Last updated: 2026-03-21 after initial definition*
