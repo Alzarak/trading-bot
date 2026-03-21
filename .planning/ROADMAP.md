@@ -30,13 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Initialize wizard captures risk tolerance, budget, paper vs live mode, autonomy level, strategies, market hours, and ticker watchlist without requiring the user to write any code
   3. User can select autonomous risk mode (Claude decides aggression) or fixed risk parameters during setup
   4. Running `/initialize` produces a `config.json` file that all downstream commands can consume without modification
-  5. Alpaca MCP server is wired into `.mcp.json` and the plugin installs Python dependencies on session start
-**Plans**: TBD
+  5. Plugin installs Python dependencies on session start (ALP-04 MCP server DROPPED -- SDK-only approach)
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: Plugin manifest, directory structure, and SessionStart hook
-- [ ] 01-02: Setup wizard agent with beginner/expert adaptive flow
-- [ ] 01-03: Config schema, trading-rules skill, and reference files
+- [ ] 01-01-PLAN.md — Plugin scaffold: manifest, directory structure, SessionStart hook, and tests
+- [ ] 01-02-PLAN.md — Domain knowledge: trading-rules skill, reference files, config schema tests
+- [ ] 01-03-PLAN.md — /initialize wizard command with adaptive beginner/expert flow
 
 ### Phase 2: Risk Management
 **Goal**: All risk controls are in place as foundational infrastructure — circuit breakers, position sizing, PDT tracking, and a PreToolUse safety hook — before any order execution code exists
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Plugin Foundation | 0/3 | Not started | - |
+| 1. Plugin Foundation | 0/3 | Planning complete | - |
 | 2. Risk Management | 0/2 | Not started | - |
 | 3. Core Trading Loop | 0/4 | Not started | - |
 | 4. Build Command | 0/2 | Not started | - |
