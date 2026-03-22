@@ -20,19 +20,27 @@ A Claude Code plugin that automates stock day trading on US markets via the Alpa
 
 ## Installation
 
-```bash
-claude plugin install trading-bot
+### From a marketplace
+
+First, add the marketplace that hosts this plugin:
+
+```
+/plugin marketplace add <owner>/<repo>
 ```
 
-Or clone and install locally:
+Then install the plugin:
 
-```bash
-git clone https://github.com/trading-bot/trading-bot-plugin.git
-cd trading-bot-plugin
-claude plugin install .
+```
+/plugin install trading-bot@<marketplace-name>
 ```
 
-Dependencies install automatically on first load via the `SessionStart` hook.
+### From a local directory (development)
+
+```bash
+claude --plugin-dir ./trading-bot
+```
+
+Dependencies install automatically on first load via the `SessionStart` hook. Run `/reload-plugins` after installation to activate.
 
 ## Quick Start
 
