@@ -24,9 +24,12 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from loguru import logger
 
+from apscheduler.triggers.cron import CronTrigger
 from scripts.audit_logger import AuditLogger
 from scripts.claude_analyzer import ClaudeAnalyzer
+from scripts.eod_report import EODReportGenerator
 from scripts.market_scanner import MarketScanner
+from scripts.notifier import Notifier
 from scripts.order_executor import OrderExecutor
 from scripts.portfolio_tracker import PortfolioTracker
 from scripts.risk_manager import RiskManager
@@ -403,6 +406,54 @@ def execute_claude_recommendation(
 
 
 # ------------------------------------------------------------------
+# End-of-day report
+# ------------------------------------------------------------------
+
+def end_of_day_report(
+    tracker: PortfolioTracker,
+    state_store: StateStore,
+    notifier: Notifier,
+    eod_generator: EODReportGenerator,
+) -> None:
+    """Generate and dispatch the end-of-day trading summary.
+
+    Called by APScheduler at 16:05 ET (5 minutes after market close).
+    Generates a full report from trade history and P&L, logs it, sends
+    it via the notifier, and checks each SELL trade for large events.
+
+    Args:
+        tracker: PortfolioTracker for P&L data and start equity.
+        state_store: StateStore for trade history.
+        notifier: Notifier for dispatching messages.
+        eod_generator: EODReportGenerator for building the report dict.
+    """
+    try:
+        report = eod_generator.generate(tracker, state_store)
+        formatted = eod_generator.format_text(report)
+
+        logger.info("End-of-day report:\n{}", formatted)
+        notifier.send("End of Day Report", formatted)
+
+        # Check sell trades for large events
+        today_sells = [
+            t for t in state_store.get_trade_history(limit=500)
+            if t.get("action") == "SELL" and t.get("pnl") is not None
+        ]
+        for trade in today_sells:
+            pnl = trade["pnl"]
+            if notifier.is_large_event(pnl, tracker.start_equity):
+                direction = "WIN" if pnl > 0 else "LOSS"
+                notifier.send(
+                    f"Large {direction}: {trade['symbol']}",
+                    f"P&L: ${pnl:+.2f} on {trade['qty']} shares "
+                    f"of {trade['symbol']} ({trade['strategy']})",
+                    level="warning",
+                )
+    except Exception as exc:
+        logger.error("end_of_day_report: failed to generate report: {}", exc)
+
+
+# ------------------------------------------------------------------
 # Graceful shutdown
 # ------------------------------------------------------------------
 
@@ -492,18 +543,22 @@ def main() -> None:
         len(reconcile_result["updated"]),
     )
 
-    # 5. Create RiskManager with state_store delegation
-    risk_manager = RiskManager(config, trading_client, state_store=state_store)
+    # 5. Create Notifier and EODReportGenerator
+    notifier = Notifier(config)
+    eod_generator = EODReportGenerator()
 
-    # 6. Initialize session (circuit breaker check + start equity capture)
+    # 6. Create RiskManager with state_store and notifier
+    risk_manager = RiskManager(config, trading_client, state_store=state_store, notifier=notifier)
+
+    # 7. Initialize session (circuit breaker check + start equity capture)
     risk_manager.initialize_session()
 
-    # 7. Create scanner, executor, tracker
+    # 8. Create scanner, executor, tracker (tracker gets notifier for large trade alerts)
     scanner = MarketScanner(trading_client, data_client, config)
     executor = OrderExecutor(risk_manager, config)
-    tracker = PortfolioTracker(trading_client, state_store, config)
+    tracker = PortfolioTracker(trading_client, state_store, config, notifier=notifier)
 
-    # 8. Load strategies from config
+    # 9. Load strategies from config
     strategies = config.get("strategies", [])
     if not strategies:
         logger.warning("No strategies configured — bot will scan but not trade")
@@ -514,7 +569,7 @@ def main() -> None:
         [s.get("name") for s in strategies],
     )
 
-    # 9. Create and start APScheduler
+    # 10. Create and start APScheduler
     scheduler = BackgroundScheduler(timezone="America/New_York")
     scheduler.add_job(
         func=scan_and_trade,
@@ -525,21 +580,30 @@ def main() -> None:
         misfire_grace_time=30,
         coalesce=True,
     )
+    scheduler.add_job(
+        func=end_of_day_report,
+        trigger=CronTrigger(hour=16, minute=5, timezone="America/New_York"),
+        args=[tracker, state_store, notifier, eod_generator],
+        id="end_of_day_report",
+        name="End-of-day summary report",
+        misfire_grace_time=300,
+        coalesce=True,
+    )
     scheduler.start()
     logger.info("Trading bot started. Press Ctrl+C to stop.")
 
-    # 10. Wait loop — sleep 1s at a time to stay responsive to shutdown signals
+    # 11. Wait loop — sleep 1s at a time to stay responsive to shutdown signals
     while not _shutdown_requested:
         time.sleep(1)
 
-    # 11. Scheduler shutdown — wait=True lets the current cycle finish
+    # 12. Scheduler shutdown — wait=True lets the current cycle finish
     logger.info("Stopping scheduler (waiting for current cycle to complete)...")
     scheduler.shutdown(wait=True)
 
-    # 12. Graceful shutdown: close all positions
+    # 13. Graceful shutdown: close all positions
     perform_graceful_shutdown(trading_client, state_store)
 
-    # 13. Close SQLite connection
+    # 14. Close SQLite connection
     state_store.close()
 
     # 14. Log final P&L summary

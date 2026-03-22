@@ -40,10 +40,11 @@ class PortfolioTracker:
     This is the baseline for daily P&L calculations.
     """
 
-    def __init__(self, trading_client, state_store, config: dict) -> None:
+    def __init__(self, trading_client, state_store, config: dict, notifier=None) -> None:
         self.trading_client = trading_client
         self.state_store = state_store
         self.config = config
+        self.notifier = notifier
 
         # Capture start equity for P&L baseline
         account = trading_client.get_account()
@@ -110,6 +111,16 @@ class PortfolioTracker:
             "Trade logged: {} {} {} @ ${:.2f} (strategy={}, pnl={})",
             action, qty, symbol, price, strategy, pnl,
         )
+
+        # Check for large event on SELL trades with realized P&L
+        if action == "SELL" and pnl is not None and self.notifier:
+            if self.notifier.is_large_event(pnl, self.start_equity):
+                direction = "WIN" if pnl > 0 else "LOSS"
+                self.notifier.send(
+                    f"Large {direction}: {symbol}",
+                    f"P&L: ${pnl:+.2f} on {qty} shares of {symbol} ({strategy})",
+                    level="warning",
+                )
 
     # ------------------------------------------------------------------
     # P&L calculations

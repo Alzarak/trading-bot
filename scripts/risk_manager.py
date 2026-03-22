@@ -31,10 +31,11 @@ class RiskManager:
         trading_client: Alpaca TradingClient instance (or mock).
     """
 
-    def __init__(self, config: dict, trading_client, state_store=None) -> None:
+    def __init__(self, config: dict, trading_client, state_store=None, notifier=None) -> None:
         self.config = config
         self.client = trading_client
         self.state_store = state_store
+        self.notifier = notifier
         self.circuit_breaker_triggered: bool = False
         self.start_equity: float | None = None
         if state_store is None:
@@ -100,6 +101,13 @@ class RiskManager:
             )
             self._persist_circuit_breaker()
             self.circuit_breaker_triggered = True
+            if self.notifier:
+                drawdown_pct = abs(loss_pct)
+                self.notifier.send(
+                    "CIRCUIT BREAKER FIRED",
+                    f"Daily drawdown {drawdown_pct:.2f}% exceeded threshold. Trading halted.",
+                    level="critical",
+                )
             return True
 
         return False
