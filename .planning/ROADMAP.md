@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Risk Management** - Circuit breakers, position sizing, PDT guard, and safety hook wired before any order code exists (completed 2026-03-22)
 - [x] **Phase 3: Core Trading Loop** - Deterministic market scan → signal → order → track pipeline running in paper mode (completed 2026-03-22)
 - [x] **Phase 4: Build Command** - `/build` generates tailored Python scripts with secure secret management (completed 2026-03-22)
-- [ ] **Phase 5: Run Command and Claude Analysis** - `/run` orchestrates multi-agent execution; Claude added as strategy-level reasoning layer
+- [x] **Phase 5: Run Command and Claude Analysis** - `/run` orchestrates multi-agent execution; Claude added as strategy-level reasoning layer (completed 2026-03-22)
 - [ ] **Phase 6: Distribution and Observability** - Marketplace publishing, standalone mode, end-of-day reports, and notifications
 
 ## Phase Details
@@ -99,11 +99,11 @@ Plans:
   3. Claude's recommendations pass through the deterministic Python risk manager before any order is submitted — Claude never calls an Alpaca order tool directly
   4. Every Claude trade decision is written to the audit log with full reasoning inspectable after the session
   5. The loop runs in both Claude Code agent mode and standalone Python mode from the same generated scripts
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 05-01-PLAN.md — /run command, ClaudeAnalyzer module, ClaudeRecommendation type, and market-analyst agent update
-- [ ] 05-02-PLAN.md — AuditLogger for Claude decisions, bot.py Claude integration, trade-executor agent update
+- [x] 05-02-PLAN.md — AuditLogger for Claude decisions, bot.py Claude integration, trade-executor agent update
 
 ### Phase 6: Distribution and Observability
 **Goal**: The plugin is publishable to the Claude Code marketplace, users receive end-of-day summaries and key event notifications, and all runtime observability is in place for unattended operation
@@ -131,5 +131,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Risk Management | 2/2 | Complete   | 2026-03-22 |
 | 3. Core Trading Loop | 5/5 | Complete   | 2026-03-22 |
 | 4. Build Command | 2/2 | Complete   | 2026-03-22 |
-| 5. Run Command and Claude Analysis | 1/2 | In Progress|  |
+| 5. Run Command and Claude Analysis | 2/2 | Complete   | 2026-03-22 |
 | 6. Distribution and Observability | 0/2 | Not started | - |

@@ -75,8 +75,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **AI-01**: Claude analyzes each trade opportunity with structured JSON output (action, confidence, reasoning)
 - [x] **AI-02**: Claude accesses real-time market data via Alpaca MCP server during analysis
 - [x] **AI-03**: Claude operates as strategy-level analyst — never submits orders directly
-- [ ] **AI-04**: All Claude recommendations pass through deterministic Python risk manager before execution
-- [ ] **AI-05**: Claude's reasoning is logged for every trade decision (inspectable audit trail)
+- [x] **AI-04**: All Claude recommendations pass through deterministic Python risk manager before execution
+- [x] **AI-05**: Claude's reasoning is logged for every trade decision (inspectable audit trail)
 
 ### Plugin Architecture
 
@@ -192,8 +192,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-01 | Phase 5 | Complete |
 | AI-02 | Phase 5 | Complete |
 | AI-03 | Phase 5 | Complete |
-| AI-04 | Phase 5 | Pending |
-| AI-05 | Phase 5 | Pending |
+| AI-04 | Phase 5 | Complete |
+| AI-05 | Phase 5 | Complete |
 | PLUG-01 | Phase 1 | Complete |
 | PLUG-02 | Phase 5 | Complete |
 | PLUG-03 | Phase 2 | Complete |
