@@ -328,3 +328,91 @@ class TestGhostPosition:
             result = rm.submit_with_retry(request, symbol="AAPL")
         assert result is mock_order
         assert mock_trading_client.submit_order.call_count == 2
+
+
+# ---------------------------------------------------------------------------
+# TestAgentDefinition
+# ---------------------------------------------------------------------------
+
+
+class TestAgentDefinition:
+    """PLUG-03: risk-manager agent exists with correct frontmatter."""
+
+    def test_agent_file_exists(self):
+        agent_path = Path(__file__).parent.parent / "agents" / "risk-manager.md"
+        assert agent_path.exists(), f"Agent file missing: {agent_path}"
+
+    def test_agent_has_model_sonnet(self):
+        agent_path = Path(__file__).parent.parent / "agents" / "risk-manager.md"
+        content = agent_path.read_text()
+        assert "model: sonnet" in content, "Agent must use model: sonnet"
+
+    def test_agent_has_name(self):
+        agent_path = Path(__file__).parent.parent / "agents" / "risk-manager.md"
+        content = agent_path.read_text()
+        assert "name: risk-manager" in content, "Agent must have name: risk-manager"
+
+
+# ---------------------------------------------------------------------------
+# TestPreToolUseHook
+# ---------------------------------------------------------------------------
+
+
+class TestPreToolUseHook:
+    """PLUG-07: validate-order.sh exists and is executable."""
+
+    def test_hook_script_exists(self):
+        hook_path = Path(__file__).parent.parent / "hooks" / "validate-order.sh"
+        assert hook_path.exists(), f"Hook script missing: {hook_path}"
+
+    def test_hook_script_is_executable(self):
+        import stat
+        hook_path = Path(__file__).parent.parent / "hooks" / "validate-order.sh"
+        mode = hook_path.stat().st_mode
+        assert mode & stat.S_IXUSR, "Hook script must be executable"
+
+    def test_hook_uses_json_deny_not_exit_code(self):
+        hook_path = Path(__file__).parent.parent / "hooks" / "validate-order.sh"
+        content = hook_path.read_text()
+        assert "permissionDecision" in content, "Hook must use permissionDecision JSON"
+        assert 'exit 2' not in content, "Hook must NOT use exit code 2 for denial"
+
+    def test_hook_checks_circuit_breaker_flag(self):
+        hook_path = Path(__file__).parent.parent / "hooks" / "validate-order.sh"
+        content = hook_path.read_text()
+        assert "circuit_breaker.flag" in content, "Hook must check circuit breaker flag"
+
+
+# ---------------------------------------------------------------------------
+# TestHooksJson
+# ---------------------------------------------------------------------------
+
+
+class TestHooksJson:
+    """PLUG-07: hooks.json has PreToolUse entry."""
+
+    def test_hooks_json_has_pretooluse(self):
+        hooks_path = Path(__file__).parent.parent / "hooks" / "hooks.json"
+        import json
+        hooks = json.loads(hooks_path.read_text())
+        assert "PreToolUse" in hooks["hooks"], "hooks.json must have PreToolUse entry"
+
+    def test_pretooluse_targets_bash(self):
+        hooks_path = Path(__file__).parent.parent / "hooks" / "hooks.json"
+        import json
+        hooks = json.loads(hooks_path.read_text())
+        matcher = hooks["hooks"]["PreToolUse"][0]["matcher"]
+        assert matcher == "Bash", f"PreToolUse matcher must be 'Bash', got '{matcher}'"
+
+    def test_pretooluse_references_validate_order(self):
+        hooks_path = Path(__file__).parent.parent / "hooks" / "hooks.json"
+        import json
+        hooks = json.loads(hooks_path.read_text())
+        command = hooks["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+        assert "validate-order.sh" in command, "PreToolUse must reference validate-order.sh"
+
+    def test_session_start_preserved(self):
+        hooks_path = Path(__file__).parent.parent / "hooks" / "hooks.json"
+        import json
+        hooks = json.loads(hooks_path.read_text())
+        assert "SessionStart" in hooks["hooks"], "SessionStart hook must be preserved"
