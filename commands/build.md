@@ -68,32 +68,45 @@ Tell the user what was generated. Use this format:
 
 Tell the user:
 
-1. **Copy the directory to your server:**
+"Your standalone trading bot has been generated at: `{output_dir}`"
+
+**Files generated:** List all files from `result["files_generated"]`
+
+**Strategies included:** List all strategies from `result["strategies_included"]`
+
+**To deploy on a server:**
+
+1. **Copy the entire directory to your server:**
    ```bash
    scp -r {output_dir} user@your-server:/path/to/trading-bot
    ```
    Or run it locally from the output directory.
 
 2. **Set up your API credentials:**
-   Create a `.env` file in the output directory:
-   ```
-   ALPACA_API_KEY=your_key_here
-   ALPACA_SECRET_KEY=your_secret_here
-   ALPACA_PAPER=true
-   ```
-   Get your API keys at: https://app.alpaca.markets/
-
-3. **Install dependencies on your server:**
    ```bash
-   pip install alpaca-py==0.43.2 pandas-ta==0.4.71b0 pandas numpy APScheduler loguru python-dotenv
+   cp .env.template .env
+   # Edit .env and add your Alpaca API keys
+   ```
+   Get your keys at: https://app.alpaca.markets/
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   # Or with uv (faster): uv pip install -r requirements.txt
    ```
 
-4. **Run the bot:**
+4. **Start the bot:**
    ```bash
-   cd trading-bot-standalone
    python bot.py
    ```
+   Or use the included launcher script: `./run.sh`
 
-5. **Monitor logs:** The bot writes trade logs to `trades_YYYY-MM-DD.log` in the same directory.
+5. **For unattended server operation:** See `DEPLOY.md` for cron and systemd setup examples that auto-restart the bot on reboot or failure.
+
+6. **Monitor logs:** The bot writes structured logs via loguru. Check the `logs/` directory.
+
+**Security reminder:** Your `.env` file will contain your API keys. The included `.gitignore` will prevent accidentally committing it to git. Never share your `.env` file.
+
+**Paper trading note:** The bot defaults to paper trading mode (`ALPACA_PAPER=true` in your `.env`). To switch to live trading with real money, set `ALPACA_PAPER=false` in your `.env` file — only do this when you are confident in the bot's behavior.
 
 If you want to run the bot directly from Claude Code instead, use `/run`.
