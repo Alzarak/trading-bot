@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Plugin Foundation** - Installable plugin structure with `/initialize` wizard and config schema (completed 2026-03-22)
 - [x] **Phase 2: Risk Management** - Circuit breakers, position sizing, PDT guard, and safety hook wired before any order code exists (completed 2026-03-22)
-- [ ] **Phase 3: Core Trading Loop** - Deterministic market scan → signal → order → track pipeline running in paper mode
+- [x] **Phase 3: Core Trading Loop** - Deterministic market scan → signal → order → track pipeline running in paper mode (completed 2026-03-22)
 - [ ] **Phase 4: Build Command** - `/build` generates tailored Python scripts with secure secret management
 - [ ] **Phase 5: Run Command and Claude Analysis** - `/run` orchestrates multi-agent execution; Claude added as strategy-level reasoning layer
 - [ ] **Phase 6: Distribution and Observability** - Marketplace publishing, standalone mode, end-of-day reports, and notifications
@@ -64,14 +64,14 @@ Plans:
   3. Bot recovers from a crash by reading SQLite state and reconciling against Alpaca's live positions on startup — no phantom positions
   4. Bot closes or logs all open positions on SIGINT/SIGTERM graceful shutdown
   5. Bot respects market hours by checking Alpaca's market clock before each loop iteration and skips iteration if market is closed
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans complete
 
 Plans:
 - [x] 03-01-PLAN.md — Signal dataclass, MarketScanner with all 6 technical indicators (pandas-ta), market clock check
 - [x] 03-02-PLAN.md — OrderExecutor with 4 order types, ATR-based stops, market-analyst and trade-executor agent definitions
 - [x] 03-03-PLAN.md — SQLite StateStore with crash recovery, position reconciliation, PDT migration from JSON
 - [x] 03-04-PLAN.md — Strategy modules (momentum, mean reversion, breakout, VWAP) as pluggable BaseStrategy implementations
-- [ ] 03-05-PLAN.md — PortfolioTracker, bot.py main loop (APScheduler), graceful shutdown, RiskManager state_store integration
+- [x] 03-05-PLAN.md — PortfolioTracker, bot.py main loop (APScheduler), graceful shutdown, RiskManager state_store integration
 
 ### Phase 4: Build Command
 **Goal**: Users can run `/build` to generate a complete, tailored set of Python trading scripts from their config — ready to run — with no secrets written to any generated file
@@ -129,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation | 3/3 | Complete   | 2026-03-22 |
 | 2. Risk Management | 2/2 | Complete   | 2026-03-22 |
-| 3. Core Trading Loop | 4/5 | In Progress|  |
+| 3. Core Trading Loop | 5/5 | Complete   | 2026-03-22 |
 | 4. Build Command | 0/2 | Not started | - |
 | 5. Run Command and Claude Analysis | 0/2 | Not started | - |
 | 6. Distribution and Observability | 0/2 | Not started | - |

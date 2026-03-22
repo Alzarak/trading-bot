@@ -42,7 +42,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **POS-01**: Bot sizes positions as percentage of account equity (configurable)
 - [x] **POS-02**: Bot enforces maximum position count limit
-- [ ] **POS-03**: Bot closes or logs all open positions on graceful shutdown (SIGINT/SIGTERM)
+- [x] **POS-03**: Bot closes or logs all open positions on graceful shutdown (SIGINT/SIGTERM)
 - [x] **POS-04**: Bot reconciles local state against Alpaca's actual positions on startup (crash recovery)
 
 ### Risk Management
@@ -91,8 +91,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Observability
 
-- [ ] **OBS-01**: Bot logs every trade to file (timestamp, ticker, action, price, quantity, P&L)
-- [ ] **OBS-02**: Bot tracks portfolio P&L (daily and total return) using Alpaca account endpoint
+- [x] **OBS-01**: Bot logs every trade to file (timestamp, ticker, action, price, quantity, P&L)
+- [x] **OBS-02**: Bot tracks portfolio P&L (daily and total return) using Alpaca account endpoint
 - [ ] **OBS-03**: Bot generates end-of-day summary report (P&L, trades taken, win rate, biggest winner/loser)
 - [ ] **OBS-04**: Bot sends notifications on key events (circuit breaker fired, daily summary, large win/loss)
 - [ ] **OBS-05**: Notification channels configurable (Slack webhook, email)
@@ -171,7 +171,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ORD-05 | Phase 3 | Complete |
 | POS-01 | Phase 2 | Complete |
 | POS-02 | Phase 2 | Complete |
-| POS-03 | Phase 3 | Pending |
+| POS-03 | Phase 3 | Complete |
 | POS-04 | Phase 3 | Complete |
 | RISK-01 | Phase 2 | Complete |
 | RISK-02 | Phase 2 | Complete |
@@ -202,8 +202,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLUG-06 | Phase 1 | Complete |
 | PLUG-07 | Phase 2 | Complete |
 | PLUG-08 | Phase 1 | Complete |
-| OBS-01 | Phase 3 | Pending |
-| OBS-02 | Phase 3 | Pending |
+| OBS-01 | Phase 3 | Complete |
+| OBS-02 | Phase 3 | Complete |
 | OBS-03 | Phase 6 | Pending |
 | OBS-04 | Phase 6 | Pending |
 | OBS-05 | Phase 6 | Pending |
