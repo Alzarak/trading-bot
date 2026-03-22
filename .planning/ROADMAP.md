@@ -114,11 +114,11 @@ Plans:
   2. Plugin includes a valid `plugin.json` manifest with version, description, and dependency declarations
   3. Bot generates an end-of-day summary report showing P&L, trade count, win rate, and biggest winner/loser
   4. Bot sends a notification when the circuit breaker fires, at end-of-day, or on a large win/loss — via at least one configurable channel (Slack or email)
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] 06-01: `plugin.json` manifest, marketplace publishing, and installation verification
-- [ ] 06-02: End-of-day report, Slack/email notification webhooks
+- [ ] 06-01-PLAN.md — EOD report generator, Notifier (Slack webhook), bot.py integration
+- [ ] 06-02-PLAN.md — Plugin manifest v1.0.0, marketplace.json, installation verification
 
 ## Progress
 
