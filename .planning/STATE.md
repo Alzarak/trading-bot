@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-22T01:21:04.236Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-03-22T01:30:38.018Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 03 (core-trading-loop) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Plan: 4 of 5
 | Phase 03-core-trading-loop P03 | 4 | 2 tasks | 2 files |
 | Phase 03 P02 | 4 | 2 tasks | 5 files |
 | Phase 03 P01 | 292 | 2 tasks | 4 files |
+| Phase 03-core-trading-loop P04 | 6 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,9 @@ Recent decisions affecting current work:
 - [Phase 03]: BUY signals use bracket orders (atomic stop+tp), SELL signals use market orders for speed
 - [Phase 03]: pytest.ini with pythonpath=. added — fixes scripts module resolution for all tests
 - [Phase 03]: execute_signal() gates 4 risk checks before building any order object — circuit_breaker, position_count, pdt, sizing
+- [Phase 03-core-trading-loop]: BaseStrategy(ABC) placed in base.py not __init__.py — avoids circular import since concrete strategies must import from BaseStrategy and __init__.py imports all concrete strategies
+- [Phase 03-core-trading-loop]: VWAP stop uses percentage formula (close * (1 - max_deviation_pct/100)) not ATR multiplier — VWAP trades have known invalidation level relative to VWAP deviation
+- [Phase 03-core-trading-loop]: Breakout checks prior bar's rolling max (iloc[-2]) not current bar — confirms breakout occurred rather than measuring current bar's own price
 
 ### Pending Todos
 
@@ -105,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T01:21:04.226Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-22T01:30:38.009Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None

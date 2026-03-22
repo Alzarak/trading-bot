@@ -64,11 +64,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Trading Strategies
 
-- [ ] **STRAT-01**: Momentum strategy — enters on strong RSI + MACD confirmation, exits on reversal signals
-- [ ] **STRAT-02**: Mean reversion strategy — enters on oversold/overbought extremes, exits on return to mean
-- [ ] **STRAT-03**: Breakout strategy — enters on volume-confirmed price breakouts, exits on failed continuation
-- [ ] **STRAT-04**: VWAP reversion strategy — enters on significant deviation from VWAP, exits on reversion
-- [ ] **STRAT-05**: Each strategy is a configurable module selectable via config
+- [x] **STRAT-01**: Momentum strategy — enters on strong RSI + MACD confirmation, exits on reversal signals
+- [x] **STRAT-02**: Mean reversion strategy — enters on oversold/overbought extremes, exits on return to mean
+- [x] **STRAT-03**: Breakout strategy — enters on volume-confirmed price breakouts, exits on failed continuation
+- [x] **STRAT-04**: VWAP reversion strategy — enters on significant deviation from VWAP, exits on reversion
+- [x] **STRAT-05**: Each strategy is a configurable module selectable via config
 
 ### Claude AI Integration
 
@@ -184,11 +184,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TA-04 | Phase 3 | Complete |
 | TA-05 | Phase 3 | Complete |
 | TA-06 | Phase 3 | Complete |
-| STRAT-01 | Phase 3 | Pending |
-| STRAT-02 | Phase 3 | Pending |
-| STRAT-03 | Phase 3 | Pending |
-| STRAT-04 | Phase 3 | Pending |
-| STRAT-05 | Phase 3 | Pending |
+| STRAT-01 | Phase 3 | Complete |
+| STRAT-02 | Phase 3 | Complete |
+| STRAT-03 | Phase 3 | Complete |
+| STRAT-04 | Phase 3 | Complete |
+| STRAT-05 | Phase 3 | Complete |
 | AI-01 | Phase 5 | Pending |
 | AI-02 | Phase 5 | Pending |
 | AI-03 | Phase 5 | Pending |
