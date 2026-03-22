@@ -20,6 +20,7 @@ REQUIRED_FIELDS = {
     "max_position_pct": (int, float),
     "max_daily_loss_pct": (int, float),
     "budget_usd": (int, float),
+    "max_positions": (int, float),
     "strategies": list,
     "market_hours_only": bool,
     "watchlist": list,
@@ -160,6 +161,12 @@ class TestConfigSchema:
         """STATE-03: config_version must be '1' for v1 schema."""
         assert sample_config["config_version"] == "1", (
             f"config_version must be '1', got {sample_config['config_version']!r}"
+        )
+
+    def test_max_positions_in_range(self, sample_config):
+        """POS-02: max_positions must be in range [1, 10]."""
+        assert 1 <= sample_config["max_positions"] <= 10, (
+            "max_positions must be in range [1, 10]"
         )
 
     def test_config_is_valid_json_serializable(self, sample_config):

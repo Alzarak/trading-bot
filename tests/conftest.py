@@ -44,6 +44,7 @@ def sample_config():
         "max_position_pct": 5.0,
         "max_daily_loss_pct": 2.0,
         "budget_usd": 10000,
+        "max_positions": 10,
         "strategies": [
             {
                 "name": "momentum",
@@ -61,6 +62,29 @@ def sample_config():
         "autonomy_level": "notify_only",
         "config_version": "1",
     }
+
+
+@pytest.fixture
+def mock_trading_client():
+    """Return a MagicMock trading client with sensible defaults."""
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    account = MagicMock()
+    account.equity = "10000.00"
+    client.get_account.return_value = account
+    client.get_all_positions.return_value = []
+    client.get_open_position.side_effect = Exception("No position")
+    return client
+
+
+@pytest.fixture
+def plugin_data_dir(tmp_path, monkeypatch):
+    """Create a temp dir and set CLAUDE_PLUGIN_DATA env var."""
+    data_dir = tmp_path / "plugin_data"
+    data_dir.mkdir()
+    monkeypatch.setenv("CLAUDE_PLUGIN_DATA", str(data_dir))
+    return data_dir
 
 
 @pytest.fixture
