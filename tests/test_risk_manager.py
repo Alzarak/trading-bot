@@ -207,11 +207,12 @@ class TestClaudeDecides:
         assert shares == 15  # 750 / 50 = 15
 
     def test_clamps_low_override(self, sample_config, mock_trading_client, plugin_data_dir):
-        """Override 10% is clamped to 50% of max_position_pct (5% -> 2.5%)."""
+        """Override 1% is clamped up to 50% of max_position_pct (5% -> 2.5%)."""
         rm = make_rm(sample_config, mock_trading_client)
-        # max_position_pct = 5.0, 10% override -> clamp to 2.5%
+        # max_position_pct = 5.0, lower bound = 2.5%
+        # override = 1% -> below lower bound -> clamp to 2.5%
         # equity=10000, 2.5% = 250, price=50 -> 5 shares
-        shares = rm.calculate_position_size("AAPL", current_price=50.0, size_override_pct=10.0)
+        shares = rm.calculate_position_size("AAPL", current_price=50.0, size_override_pct=1.0)
         assert shares == 5  # 250 / 50 = 5
 
     def test_accepts_valid_override(self, sample_config, mock_trading_client, plugin_data_dir):
