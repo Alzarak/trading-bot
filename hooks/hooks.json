@@ -6,8 +6,7 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/install-deps.sh\"",
-            "timeout": 120,
-            "statusMessage": "[trading-bot] Installing dependencies..."
+            "timeout": 120
           }
         ]
       }
@@ -19,8 +18,7 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/validate-order.sh\"",
-            "timeout": 10,
-            "statusMessage": "[trading-bot] Validating order safety..."
+            "timeout": 10
           }
         ]
       }
@@ -30,9 +28,8 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Check if a trading session was active during this conversation (symbols scanned, signals generated, or orders submitted). If trading occurred, verify all open positions have stop-losses and remind the user of pending unexecuted signals, then return {\"decision\": \"block\", \"reason\": \"Unprotected positions or pending signals remain\"}. If all positions are protected or no trading occurred, return {\"decision\": \"allow\", \"reason\": \"Safe to stop\"}.",
-            "timeout": 30,
-            "statusMessage": "[trading-bot] Checking trading session status..."
+            "prompt": "Check if a trading session was active in this conversation. If trading occurred, verify all positions have stop-losses and note any pending signals, then return {\"decision\": \"block\", \"reason\": \"reason\"}. If safe or no trading occurred, return {\"decision\": \"allow\", \"reason\": \"Safe to stop\"}.",
+            "timeout": 30
           }
         ]
       }
