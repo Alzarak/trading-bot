@@ -27,7 +27,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **ALP-01**: Plugin authenticates with Alpaca API using environment variables (paper and live keys)
 - [ ] **ALP-02**: Plugin supports paper trading mode with Alpaca's paper endpoint
 - [ ] **ALP-03**: Plugin supports live trading mode with Alpaca's live endpoint
-- [ ] **ALP-04**: Alpaca MCP server is configured in `.mcp.json` for real-time market data access within Claude
+- [x] **ALP-04**: Alpaca MCP server is configured in `.mcp.json` for real-time market data access within Claude
 - [ ] **ALP-05**: Plugin queries Alpaca market clock to enforce market hours (9:30am-4:00pm ET)
 
 ### Order Management
@@ -80,12 +80,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Plugin Architecture
 
-- [ ] **PLUG-01**: Plugin follows Claude Code plugin directory structure (commands/, agents/, skills/, hooks/)
+- [x] **PLUG-01**: Plugin follows Claude Code plugin directory structure (commands/, agents/, skills/, hooks/)
 - [ ] **PLUG-02**: Separate agent for market scanning/analysis
 - [ ] **PLUG-03**: Separate agent for risk management validation
 - [ ] **PLUG-04**: Separate agent for trade execution
 - [ ] **PLUG-05**: Trading rules skill provides domain context to all agents
-- [ ] **PLUG-06**: SessionStart hook installs Python dependencies into plugin data directory
+- [x] **PLUG-06**: SessionStart hook installs Python dependencies into plugin data directory
 - [ ] **PLUG-07**: PreToolUse hook validates safety constraints before order submission
 - [ ] **PLUG-08**: Reference files document trading strategies, risk rules, and Alpaca API patterns
 
@@ -162,7 +162,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ALP-01 | Phase 1 | Pending |
 | ALP-02 | Phase 1 | Pending |
 | ALP-03 | Phase 1 | Pending |
-| ALP-04 | Phase 1 | Pending |
+| ALP-04 | Phase 1 | Complete |
 | ALP-05 | Phase 3 | Pending |
 | ORD-01 | Phase 3 | Pending |
 | ORD-02 | Phase 3 | Pending |
@@ -194,12 +194,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-03 | Phase 5 | Pending |
 | AI-04 | Phase 5 | Pending |
 | AI-05 | Phase 5 | Pending |
-| PLUG-01 | Phase 1 | Pending |
+| PLUG-01 | Phase 1 | Complete |
 | PLUG-02 | Phase 5 | Pending |
 | PLUG-03 | Phase 2 | Pending |
 | PLUG-04 | Phase 5 | Pending |
 | PLUG-05 | Phase 1 | Pending |
-| PLUG-06 | Phase 1 | Pending |
+| PLUG-06 | Phase 1 | Complete |
 | PLUG-07 | Phase 2 | Pending |
 | PLUG-08 | Phase 1 | Pending |
 | OBS-01 | Phase 3 | Pending |
