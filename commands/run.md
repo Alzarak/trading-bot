@@ -217,10 +217,11 @@ trading_client = TradingClient(api_key, secret_key, paper=paper)
 data_client = StockHistoricalDataClient(api_key, secret_key)
 scanner = MarketScanner(trading_client, data_client, config)
 
-state_store = StateStore()
-risk_manager = RiskManager(trading_client, config, state_store=state_store)
-executor = OrderExecutor(risk_manager, trading_client, config)
-tracker = PortfolioTracker(config)
+data_dir = os.environ.get('CLAUDE_PLUGIN_DATA', '.')
+state_store = StateStore(os.path.join(data_dir, 'trading.db'))
+risk_manager = RiskManager(config, trading_client, state_store=state_store)
+executor = OrderExecutor(risk_manager, config)
+tracker = PortfolioTracker(trading_client, state_store, config)
 analyzer = ClaudeAnalyzer(config=config)
 
 # Parse each recommendation from your JSON output
@@ -235,7 +236,7 @@ for json_block in re.findall(r'\{[^{}]+\}', RECOMMENDATIONS_JSON, re.DOTALL):
         if current_price > 0:
             order = executor.execute_signal(signal, current_price)
             if order:
-                tracker.log_trade(signal, order, current_price, float(account.equity))
+                tracker.log_trade(rec.symbol, rec.action, current_price, 1, rec.strategy or 'claude', 'market')
                 print(f'Order submitted: {order}')
             else:
                 print(f'Signal blocked by risk manager: {rec.symbol}')

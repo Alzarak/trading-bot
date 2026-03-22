@@ -27,23 +27,30 @@ if [ -f "$CB_FLAG" ]; then
   exit 0
 fi
 
-# Check PDT trades count (lightweight file-based check)
-PDT_FILE="${CLAUDE_PLUGIN_DATA:-/tmp}/pdt_trades.json"
-if [ -f "$PDT_FILE" ]; then
-  # Count trades in last 7 days
-  CUTOFF=$(date -d "7 days ago" +%Y-%m-%d 2>/dev/null || date -v-7d +%Y-%m-%d 2>/dev/null || echo "")
-  if [ -n "$CUTOFF" ]; then
+# Check PDT trades count — try SQLite first (Phase 3+), fall back to JSON
+DATA_DIR="${CLAUDE_PLUGIN_DATA:-/tmp}"
+DB_FILE="${DATA_DIR}/trading.db"
+PDT_FILE="${DATA_DIR}/pdt_trades.json"
+CUTOFF=$(date -d "7 days ago" +%Y-%m-%d 2>/dev/null || date -v-7d +%Y-%m-%d 2>/dev/null || echo "")
+
+if [ -n "$CUTOFF" ]; then
+  COUNT=0
+  if [ -f "$DB_FILE" ]; then
+    # SQLite source (preferred — Phase 3 migrates PDT data here)
+    COUNT=$(sqlite3 "$DB_FILE" "SELECT COUNT(*) FROM day_trades WHERE date >= '$CUTOFF';" 2>/dev/null || echo "0")
+  elif [ -f "$PDT_FILE" ]; then
+    # JSON fallback (pre-migration)
     COUNT=$(jq --arg cutoff "$CUTOFF" '[.[] | select(.date >= $cutoff)] | length' "$PDT_FILE" 2>/dev/null || echo "0")
-    if [ "$COUNT" -ge 3 ] 2>/dev/null; then
-      jq -n '{
-        "hookSpecificOutput": {
-          "hookEventName": "PreToolUse",
-          "permissionDecision": "deny",
-          "permissionDecisionReason": "PDT limit reached (3+ day trades in rolling 7-calendar-day window). Trade blocked to prevent Pattern Day Trader designation."
-        }
-      }'
-      exit 0
-    fi
+  fi
+  if [ "$COUNT" -ge 3 ] 2>/dev/null; then
+    jq -n '{
+      "hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "deny",
+        "permissionDecisionReason": "PDT limit reached (3+ day trades in rolling 7-calendar-day window). Trade blocked to prevent Pattern Day Trader designation."
+      }
+    }'
+    exit 0
   fi
 fi
 

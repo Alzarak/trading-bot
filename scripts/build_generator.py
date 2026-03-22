@@ -33,6 +33,10 @@ _CORE_FILES = [
     "risk_manager.py",
     "state_store.py",
     "portfolio_tracker.py",
+    "audit_logger.py",
+    "claude_analyzer.py",
+    "eod_report.py",
+    "notifier.py",
 ]
 
 # Strategy source files (relative to scripts/strategies/ directory)
