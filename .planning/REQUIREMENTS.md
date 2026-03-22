@@ -28,15 +28,15 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **ALP-02**: Plugin supports paper trading mode with Alpaca's paper endpoint
 - [x] **ALP-03**: Plugin supports live trading mode with Alpaca's live endpoint
 - [x] **ALP-04**: Alpaca MCP server is configured in `.mcp.json` for real-time market data access within Claude
-- [ ] **ALP-05**: Plugin queries Alpaca market clock to enforce market hours (9:30am-4:00pm ET)
+- [x] **ALP-05**: Plugin queries Alpaca market clock to enforce market hours (9:30am-4:00pm ET)
 
 ### Order Management
 
-- [ ] **ORD-01**: Bot can submit market orders for immediate execution
-- [ ] **ORD-02**: Bot can submit limit orders for controlled entry price
-- [ ] **ORD-03**: Bot can submit bracket orders (entry + stop-loss + take-profit in one call)
-- [ ] **ORD-04**: Bot can submit trailing stop-loss orders to lock in profits
-- [ ] **ORD-05**: Bot uses ATR-based dynamic stop placement that scales with volatility
+- [x] **ORD-01**: Bot can submit market orders for immediate execution
+- [x] **ORD-02**: Bot can submit limit orders for controlled entry price
+- [x] **ORD-03**: Bot can submit bracket orders (entry + stop-loss + take-profit in one call)
+- [x] **ORD-04**: Bot can submit trailing stop-loss orders to lock in profits
+- [x] **ORD-05**: Bot uses ATR-based dynamic stop placement that scales with volatility
 
 ### Position Management
 
@@ -55,12 +55,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Technical Analysis
 
-- [ ] **TA-01**: Bot computes RSI indicator on configured timeframe
-- [ ] **TA-02**: Bot computes MACD indicator (signal line, histogram)
-- [ ] **TA-03**: Bot computes EMA (exponential moving average) for trend detection
-- [ ] **TA-04**: Bot computes ATR (average true range) for volatility-based stops
-- [ ] **TA-05**: Bot computes Bollinger Bands for mean reversion signals
-- [ ] **TA-06**: Bot computes VWAP for intraday price reference
+- [x] **TA-01**: Bot computes RSI indicator on configured timeframe
+- [x] **TA-02**: Bot computes MACD indicator (signal line, histogram)
+- [x] **TA-03**: Bot computes EMA (exponential moving average) for trend detection
+- [x] **TA-04**: Bot computes ATR (average true range) for volatility-based stops
+- [x] **TA-05**: Bot computes Bollinger Bands for mean reversion signals
+- [x] **TA-06**: Bot computes VWAP for intraday price reference
 
 ### Trading Strategies
 
@@ -81,9 +81,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Plugin Architecture
 
 - [x] **PLUG-01**: Plugin follows Claude Code plugin directory structure (commands/, agents/, skills/, hooks/)
-- [ ] **PLUG-02**: Separate agent for market scanning/analysis
+- [x] **PLUG-02**: Separate agent for market scanning/analysis
 - [x] **PLUG-03**: Separate agent for risk management validation
-- [ ] **PLUG-04**: Separate agent for trade execution
+- [x] **PLUG-04**: Separate agent for trade execution
 - [x] **PLUG-05**: Trading rules skill provides domain context to all agents
 - [x] **PLUG-06**: SessionStart hook installs Python dependencies into plugin data directory
 - [x] **PLUG-07**: PreToolUse hook validates safety constraints before order submission
@@ -163,12 +163,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ALP-02 | Phase 1 | Complete |
 | ALP-03 | Phase 1 | Complete |
 | ALP-04 | Phase 1 | Complete |
-| ALP-05 | Phase 3 | Pending |
-| ORD-01 | Phase 3 | Pending |
-| ORD-02 | Phase 3 | Pending |
-| ORD-03 | Phase 3 | Pending |
-| ORD-04 | Phase 3 | Pending |
-| ORD-05 | Phase 3 | Pending |
+| ALP-05 | Phase 3 | Complete |
+| ORD-01 | Phase 3 | Complete |
+| ORD-02 | Phase 3 | Complete |
+| ORD-03 | Phase 3 | Complete |
+| ORD-04 | Phase 3 | Complete |
+| ORD-05 | Phase 3 | Complete |
 | POS-01 | Phase 2 | Complete |
 | POS-02 | Phase 2 | Complete |
 | POS-03 | Phase 3 | Pending |
@@ -178,12 +178,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RISK-03 | Phase 2 | Complete |
 | RISK-04 | Phase 2 | Complete |
 | RISK-05 | Phase 2 | Complete |
-| TA-01 | Phase 3 | Pending |
-| TA-02 | Phase 3 | Pending |
-| TA-03 | Phase 3 | Pending |
-| TA-04 | Phase 3 | Pending |
-| TA-05 | Phase 3 | Pending |
-| TA-06 | Phase 3 | Pending |
+| TA-01 | Phase 3 | Complete |
+| TA-02 | Phase 3 | Complete |
+| TA-03 | Phase 3 | Complete |
+| TA-04 | Phase 3 | Complete |
+| TA-05 | Phase 3 | Complete |
+| TA-06 | Phase 3 | Complete |
 | STRAT-01 | Phase 3 | Pending |
 | STRAT-02 | Phase 3 | Pending |
 | STRAT-03 | Phase 3 | Pending |
@@ -195,9 +195,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-04 | Phase 5 | Pending |
 | AI-05 | Phase 5 | Pending |
 | PLUG-01 | Phase 1 | Complete |
-| PLUG-02 | Phase 5 | Pending |
+| PLUG-02 | Phase 5 | Complete |
 | PLUG-03 | Phase 2 | Complete |
-| PLUG-04 | Phase 5 | Pending |
+| PLUG-04 | Phase 5 | Complete |
 | PLUG-05 | Phase 1 | Complete |
 | PLUG-06 | Phase 1 | Complete |
 | PLUG-07 | Phase 2 | Complete |
