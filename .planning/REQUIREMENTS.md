@@ -40,18 +40,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Position Management
 
-- [ ] **POS-01**: Bot sizes positions as percentage of account equity (configurable)
-- [ ] **POS-02**: Bot enforces maximum position count limit
+- [x] **POS-01**: Bot sizes positions as percentage of account equity (configurable)
+- [x] **POS-02**: Bot enforces maximum position count limit
 - [ ] **POS-03**: Bot closes or logs all open positions on graceful shutdown (SIGINT/SIGTERM)
 - [ ] **POS-04**: Bot reconciles local state against Alpaca's actual positions on startup (crash recovery)
 
 ### Risk Management
 
-- [ ] **RISK-01**: Bot halts all trading when daily drawdown exceeds configured threshold (circuit breaker)
-- [ ] **RISK-02**: Bot tracks day trade count and warns/blocks when approaching PDT limit (4 trades per 5 days under $25K)
-- [ ] **RISK-03**: Bot wraps all API calls with exponential backoff and retry logic
-- [ ] **RISK-04**: Bot handles network failures during order submission without creating ghost positions
-- [ ] **RISK-05**: Claude dynamically adjusts aggression (position size, entry thresholds) based on market conditions and recent performance
+- [x] **RISK-01**: Bot halts all trading when daily drawdown exceeds configured threshold (circuit breaker)
+- [x] **RISK-02**: Bot tracks day trade count and warns/blocks when approaching PDT limit (4 trades per 5 days under $25K)
+- [x] **RISK-03**: Bot wraps all API calls with exponential backoff and retry logic
+- [x] **RISK-04**: Bot handles network failures during order submission without creating ghost positions
+- [x] **RISK-05**: Claude dynamically adjusts aggression (position size, entry thresholds) based on market conditions and recent performance
 
 ### Technical Analysis
 
@@ -169,15 +169,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ORD-03 | Phase 3 | Pending |
 | ORD-04 | Phase 3 | Pending |
 | ORD-05 | Phase 3 | Pending |
-| POS-01 | Phase 2 | Pending |
-| POS-02 | Phase 2 | Pending |
+| POS-01 | Phase 2 | Complete |
+| POS-02 | Phase 2 | Complete |
 | POS-03 | Phase 3 | Pending |
 | POS-04 | Phase 3 | Pending |
-| RISK-01 | Phase 2 | Pending |
-| RISK-02 | Phase 2 | Pending |
-| RISK-03 | Phase 2 | Pending |
-| RISK-04 | Phase 2 | Pending |
-| RISK-05 | Phase 2 | Pending |
+| RISK-01 | Phase 2 | Complete |
+| RISK-02 | Phase 2 | Complete |
+| RISK-03 | Phase 2 | Complete |
+| RISK-04 | Phase 2 | Complete |
+| RISK-05 | Phase 2 | Complete |
 | TA-01 | Phase 3 | Pending |
 | TA-02 | Phase 3 | Pending |
 | TA-03 | Phase 3 | Pending |

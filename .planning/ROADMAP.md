@@ -48,10 +48,10 @@ Plans:
   3. Position sizing is calculated as a configurable percentage of account equity, never a fixed dollar amount
   4. Any order submission attempt is intercepted by the PreToolUse hook, which rejects orders that violate safety constraints before they reach Alpaca
   5. All Alpaca API calls are wrapped with exponential backoff and network failures during order submission do not create ghost positions
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 02-01-PLAN.md — RiskManager class: circuit breaker, position sizing, PDT tracking, max positions, retry with ghost prevention
+- [x] 02-01-PLAN.md — RiskManager class: circuit breaker, position sizing, PDT tracking, max positions, retry with ghost prevention
 - [ ] 02-02-PLAN.md — PreToolUse safety hook (validate-order.sh) and risk-manager agent definition
 
 ### Phase 3: Core Trading Loop
@@ -127,7 +127,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation | 3/3 | Complete   | 2026-03-22 |
-| 2. Risk Management | 0/2 | Not started | - |
+| 2. Risk Management | 1/2 | In Progress|  |
 | 3. Core Trading Loop | 0/4 | Not started | - |
 | 4. Build Command | 0/2 | Not started | - |
 | 5. Run Command and Claude Analysis | 0/2 | Not started | - |
