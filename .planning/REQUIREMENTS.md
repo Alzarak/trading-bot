@@ -82,11 +82,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **PLUG-01**: Plugin follows Claude Code plugin directory structure (commands/, agents/, skills/, hooks/)
 - [ ] **PLUG-02**: Separate agent for market scanning/analysis
-- [ ] **PLUG-03**: Separate agent for risk management validation
+- [x] **PLUG-03**: Separate agent for risk management validation
 - [ ] **PLUG-04**: Separate agent for trade execution
 - [x] **PLUG-05**: Trading rules skill provides domain context to all agents
 - [x] **PLUG-06**: SessionStart hook installs Python dependencies into plugin data directory
-- [ ] **PLUG-07**: PreToolUse hook validates safety constraints before order submission
+- [x] **PLUG-07**: PreToolUse hook validates safety constraints before order submission
 - [x] **PLUG-08**: Reference files document trading strategies, risk rules, and Alpaca API patterns
 
 ### Observability
@@ -196,11 +196,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AI-05 | Phase 5 | Pending |
 | PLUG-01 | Phase 1 | Complete |
 | PLUG-02 | Phase 5 | Pending |
-| PLUG-03 | Phase 2 | Pending |
+| PLUG-03 | Phase 2 | Complete |
 | PLUG-04 | Phase 5 | Pending |
 | PLUG-05 | Phase 1 | Complete |
 | PLUG-06 | Phase 1 | Complete |
-| PLUG-07 | Phase 2 | Pending |
+| PLUG-07 | Phase 2 | Complete |
 | PLUG-08 | Phase 1 | Complete |
 | OBS-01 | Phase 3 | Pending |
 | OBS-02 | Phase 3 | Pending |

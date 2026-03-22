@@ -13,7 +13,7 @@ This roadmap delivers an autonomous stock day trading Claude Code plugin in six 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Plugin Foundation** - Installable plugin structure with `/initialize` wizard and config schema (completed 2026-03-22)
-- [ ] **Phase 2: Risk Management** - Circuit breakers, position sizing, PDT guard, and safety hook wired before any order code exists
+- [x] **Phase 2: Risk Management** - Circuit breakers, position sizing, PDT guard, and safety hook wired before any order code exists (completed 2026-03-22)
 - [ ] **Phase 3: Core Trading Loop** - Deterministic market scan → signal → order → track pipeline running in paper mode
 - [ ] **Phase 4: Build Command** - `/build` generates tailored Python scripts with secure secret management
 - [ ] **Phase 5: Run Command and Claude Analysis** - `/run` orchestrates multi-agent execution; Claude added as strategy-level reasoning layer
@@ -48,11 +48,11 @@ Plans:
   3. Position sizing is calculated as a configurable percentage of account equity, never a fixed dollar amount
   4. Any order submission attempt is intercepted by the PreToolUse hook, which rejects orders that violate safety constraints before they reach Alpaca
   5. All Alpaca API calls are wrapped with exponential backoff and network failures during order submission do not create ghost positions
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 02-01-PLAN.md — RiskManager class: circuit breaker, position sizing, PDT tracking, max positions, retry with ghost prevention
-- [ ] 02-02-PLAN.md — PreToolUse safety hook (validate-order.sh) and risk-manager agent definition
+- [x] 02-02-PLAN.md — PreToolUse safety hook (validate-order.sh) and risk-manager agent definition
 
 ### Phase 3: Core Trading Loop
 **Goal**: The full Market Scanner → Signal Generator → Risk Manager → Order Executor → Portfolio Tracker pipeline runs end-to-end in paper mode with one working strategy, crash recovery, and full trade logging
@@ -127,7 +127,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation | 3/3 | Complete   | 2026-03-22 |
-| 2. Risk Management | 1/2 | In Progress|  |
+| 2. Risk Management | 2/2 | Complete   | 2026-03-22 |
 | 3. Core Trading Loop | 0/4 | Not started | - |
 | 4. Build Command | 0/2 | Not started | - |
 | 5. Run Command and Claude Analysis | 0/2 | Not started | - |
