@@ -1,17 +1,8 @@
 {
   "name": "trading-bot",
   "version": "1.0.0",
-  "description": "Autonomous stock day trading bot for Alpaca Markets. Provides /initialize wizard, /build script generator, and /run trading loop with Claude-powered analysis.",
+  "description": "Autonomous stock day trading bot for Alpaca Markets. Interactive setup wizard, script generator, and Claude-powered trading loop.",
   "author": {
     "name": "Trading Bot"
-  },
-  "license": "MIT",
-  "keywords": ["trading", "alpaca", "stocks", "autonomous", "day-trading", "paper-trading", "technical-analysis"],
-  "commands": ["initialize", "build", "run"],
-  "dependencies": {
-    "python": ">=3.12"
-  },
-  "hooks": ["SessionStart"],
-  "agents": ["market-analyst", "risk-manager", "trade-executor"],
-  "skills": ["trading-rules"]
+  }
 }

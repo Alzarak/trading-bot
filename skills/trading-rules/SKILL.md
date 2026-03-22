@@ -1,7 +1,6 @@
 ---
 name: trading-rules
-description: "Core trading rules and risk parameters for the trading bot. Provides position sizing limits, market hours constraints, PDT rules, strategy context, and Alpaca API conventions. Auto-load when the conversation involves trading decisions, risk management, strategy execution, order placement, or market analysis."
-user-invocable: false
+description: "This skill should be used when the conversation involves trading decisions, risk management, strategy execution, order placement, market analysis, position sizing, PDT rules, or circuit breaker checks. Provides core trading rules and safety constraints."
 ---
 
 ## Core Trading Rules

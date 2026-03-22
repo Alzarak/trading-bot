@@ -10,6 +10,7 @@ A Claude Code plugin that automates stock day trading on US markets via the Alpa
 - **Paper & live trading** — Defaults to paper ($100K simulated); one config change for live
 - **Two deployment modes** — Run inside Claude Code with AI analysis, or `/build` a standalone bot for any server
 - **Full audit trail** — Every signal, risk decision, and order is logged
+- **Alpaca MCP integration** — 43 Alpaca API tools available to Claude for real-time market data
 
 ## Requirements
 
@@ -89,10 +90,20 @@ Claude acts as a **strategy-level analyst only** — all recommendations pass th
 ```
 trading-bot/
 ├── .claude-plugin/plugin.json   # Plugin manifest
-├── commands/                    # /initialize, /build, /run
+├── .mcp.json                    # Alpaca MCP server (43 API tools for Claude)
+├── commands/                    # /initialize, /build, /run (slash command stubs)
 ├── agents/                      # market-analyst, risk-manager, trade-executor
-├── skills/trading-rules/        # Auto-loaded trading context
-├── hooks/                       # SessionStart (deps), PreToolUse (order validation)
+│   ├── market-analyst.md        # Sonnet — technical indicator analysis
+│   ├── risk-manager.md          # Haiku — deterministic risk validation
+│   └── trade-executor.md        # Haiku — order routing and audit logging
+├── skills/                      # Auto-loaded context and workflows
+│   ├── initialize/SKILL.md      # Setup wizard workflow
+│   ├── build/SKILL.md           # Standalone bot generation workflow
+│   ├── run/SKILL.md             # Trading loop workflow
+│   └── trading-rules/SKILL.md   # Core trading rules (auto-loaded)
+├── hooks/                       # Event-driven automation
+│   ├── hooks.json               # SessionStart + PreToolUse + Stop hooks
+│   └── validate-order.sh        # Order validation (circuit breaker + PDT)
 ├── scripts/                     # Python trading modules
 │   ├── bot.py                   # Main entry point (APScheduler loop)
 │   ├── market_scanner.py        # OHLCV + indicator computation
@@ -101,9 +112,29 @@ trading-bot/
 │   ├── claude_analyzer.py       # Claude recommendation parsing
 │   ├── state_store.py           # SQLite persistence
 │   └── strategies/              # momentum, mean_reversion, breakout, vwap
-├── references/                  # Strategy docs, risk rules, API patterns
+├── references/                  # Detailed documentation
+│   ├── tech-stack.md            # Technology stack, versions, alternatives
+│   ├── trading-strategies.md    # Strategy logic, parameters, entry/exit
+│   ├── risk-rules.md            # Risk rules, circuit breaker, PDT
+│   └── alpaca-api-patterns.md   # Copy-paste Alpaca API code
 └── requirements.txt
 ```
+
+## Agents
+
+| Agent | Model | Purpose |
+|-------|-------|---------|
+| **market-analyst** | Sonnet | Analyzes technical indicators, generates BUY/SELL/HOLD signals with confidence scores |
+| **risk-manager** | Haiku | Validates trades against circuit breaker, PDT limits, position sizing constraints |
+| **trade-executor** | Haiku | Executes approved signals through OrderExecutor, logs results for audit trail |
+
+## Hooks
+
+| Event | Type | Purpose |
+|-------|------|---------|
+| **SessionStart** | Command | Installs Python dependencies into plugin venv |
+| **PreToolUse** (Bash) | Command | Gates order submissions — checks circuit breaker and PDT count |
+| **Stop** | Prompt | Verifies stop-losses are in place before ending a trading session |
 
 ## Configuration
 
@@ -113,12 +144,12 @@ After `/initialize`, your config is stored as JSON with these key settings:
 |---------|-------------|---------|
 | `experience_level` | beginner / intermediate / expert | — |
 | `risk_tolerance` | conservative / moderate / aggressive | — |
-| `paper` | Paper trading mode | `true` |
-| `strategy` | Active strategy | `momentum` |
+| `paper_trading` | Paper trading mode | `true` |
+| `strategies` | Active strategies with weights and params | `[momentum]` |
 | `max_position_pct` | Max equity per position (5%/10%/15% by risk) | varies |
 | `max_positions` | Max concurrent positions | `10` |
 | `max_daily_loss_pct` | Circuit breaker threshold | varies |
-| `watchlist` | Symbols to scan | `AAPL, MSFT, GOOGL, NVDA, TSLA` |
+| `watchlist` | Symbols to scan | `AAPL, MSFT, GOOGL, AMZN, SPY` |
 
 API keys are read from environment variables or `.env`:
 
@@ -133,6 +164,7 @@ ALPACA_PAPER=true
 - **Circuit breaker** halts all trading when daily loss exceeds the configured threshold
 - **PDT guard** blocks trades if 3+ day trades occur in a rolling 5-business-day window (accounts under $25K)
 - **PreToolUse hook** validates every order submission before it reaches Alpaca
+- **Stop hook** verifies all positions have stop-losses before ending a session
 - **Mandatory stop-losses** on all positions (ATR-based, minimum 0.5%)
 - **No averaging down** — the bot will not add to losing positions
 - **Graceful shutdown** closes positions on SIGINT/SIGTERM
@@ -147,6 +179,8 @@ ALPACA_PAPER=true
 | [pydantic-settings](https://github.com/pydantic/pydantic-settings) 2.x | Typed config with .env support |
 | [loguru](https://github.com/Delgan/loguru) | Structured logging with rotation |
 | [rich](https://github.com/Textualize/rich) | Terminal UI for setup wizard |
+
+See `references/tech-stack.md` for the full stack reference including version compatibility, alternatives considered, and what not to use.
 
 ## License
 

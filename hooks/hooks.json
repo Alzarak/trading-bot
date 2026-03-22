@@ -1,11 +1,14 @@
 {
+  "description": "Trading bot lifecycle hooks: dependency installation, order gating, and session completion verification",
   "hooks": {
     "SessionStart": [
       {
+        "matcher": "*",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/install-deps.sh\""
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/install-deps.sh\"",
+            "timeout": 120
           }
         ]
       }
@@ -18,6 +21,18 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/validate-order.sh\"",
             "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before stopping: if a trading session was active during this conversation (symbols were scanned, signals generated, or orders submitted), verify that all open positions have stop-losses in place and remind the user of any pending signals that were not executed. If no trading activity occurred, approve the stop.",
+            "timeout": 30
           }
         ]
       }

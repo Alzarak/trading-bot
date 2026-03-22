@@ -9,7 +9,7 @@ venv/
 env/
 *.egg-info/
 dist/
-build/
+/build/
 
 # Tests
 .pytest_cache/
