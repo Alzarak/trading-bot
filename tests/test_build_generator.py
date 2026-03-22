@@ -281,3 +281,238 @@ def test_strategies_included_matches_config(two_strategy_config, tmp_path):
 
     assert set(result["strategies_included"]) == {"momentum", "vwap"}, \
         f"Expected {{'momentum', 'vwap'}}, got {result['strategies_included']}"
+
+
+# ---------------------------------------------------------------------------
+# Test 11: .env.template is created with placeholder keys (no actual values)
+# ---------------------------------------------------------------------------
+
+def test_env_template_created_with_placeholder_keys(base_config, tmp_path):
+    """.env.template must exist with ALPACA_API_KEY= and ALPACA_SECRET_KEY= (no values)."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    env_template = output_dir / ".env.template"
+    assert env_template.exists(), ".env.template must be created in output_dir"
+
+    content = env_template.read_text()
+    # Must have keys with empty values
+    assert "ALPACA_API_KEY=" in content, ".env.template must contain ALPACA_API_KEY="
+    assert "ALPACA_SECRET_KEY=" in content, ".env.template must contain ALPACA_SECRET_KEY="
+    assert "ALPACA_PAPER=true" in content, ".env.template must contain ALPACA_PAPER=true"
+
+    # Must NOT have actual key values (no non-empty value after =)
+    import re
+    # Check that ALPACA_API_KEY= is followed only by whitespace/newline, not actual key
+    assert not re.search(r'ALPACA_API_KEY=\S+', content), \
+        ".env.template must NOT contain an actual API key value after ALPACA_API_KEY="
+    assert not re.search(r'ALPACA_SECRET_KEY=\S+', content), \
+        ".env.template must NOT contain an actual secret key value after ALPACA_SECRET_KEY="
+
+
+# ---------------------------------------------------------------------------
+# Test 12: .env.template contains comment header explaining each variable
+# ---------------------------------------------------------------------------
+
+def test_env_template_has_comment_headers(base_config, tmp_path):
+    """.env.template must contain explanatory comments for each variable."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    content = (output_dir / ".env.template").read_text()
+
+    # Must have comments explaining what the variables are
+    assert content.startswith("#"), ".env.template must start with a comment header"
+    # Must have at least some explanation about Alpaca credentials
+    assert "Alpaca" in content or "alpaca" in content, \
+        ".env.template must mention Alpaca in comments"
+    assert "paper" in content.lower(), \
+        ".env.template must explain the paper trading variable"
+
+
+# ---------------------------------------------------------------------------
+# Test 13: .gitignore is created with required exclusions
+# ---------------------------------------------------------------------------
+
+def test_gitignore_created_with_required_exclusions(base_config, tmp_path):
+    """.gitignore must be created with .env, trading.db, __pycache__, *.pyc, logs/ entries."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    gitignore = output_dir / ".gitignore"
+    assert gitignore.exists(), ".gitignore must be created in output_dir"
+
+    content = gitignore.read_text()
+    assert ".env" in content, ".gitignore must exclude .env"
+    assert "trading.db" in content, ".gitignore must exclude trading.db"
+    assert "__pycache__" in content, ".gitignore must exclude __pycache__"
+    assert "*.pyc" in content, ".gitignore must exclude *.pyc"
+    assert "logs/" in content, ".gitignore must exclude logs/"
+
+
+# ---------------------------------------------------------------------------
+# Test 14: requirements.txt is created with runtime deps only (no rich)
+# ---------------------------------------------------------------------------
+
+def test_requirements_txt_created_with_runtime_deps(base_config, tmp_path):
+    """requirements.txt must contain runtime deps and must NOT include rich."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    req_file = output_dir / "requirements.txt"
+    assert req_file.exists(), "requirements.txt must be created in output_dir"
+
+    content = req_file.read_text()
+    assert "alpaca-py" in content, "requirements.txt must include alpaca-py"
+    assert "pandas-ta" in content, "requirements.txt must include pandas-ta"
+    assert "pandas" in content, "requirements.txt must include pandas"
+    assert "numpy" in content, "requirements.txt must include numpy"
+    assert "APScheduler" in content, "requirements.txt must include APScheduler"
+    assert "pydantic-settings" in content, "requirements.txt must include pydantic-settings"
+    assert "loguru" in content, "requirements.txt must include loguru"
+    assert "python-dotenv" in content, "requirements.txt must include python-dotenv"
+    # rich is not needed standalone
+    assert "rich" not in content, "requirements.txt must NOT include rich (not needed standalone)"
+
+
+# ---------------------------------------------------------------------------
+# Test 15: DEPLOY.md is created with cron and systemd examples
+# ---------------------------------------------------------------------------
+
+def test_deploy_md_created_with_cron_and_systemd(base_config, tmp_path):
+    """DEPLOY.md must be created with cron and systemd deployment examples."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    deploy_md = output_dir / "DEPLOY.md"
+    assert deploy_md.exists(), "DEPLOY.md must be created in output_dir"
+
+    content = deploy_md.read_text()
+    assert "cron" in content.lower(), "DEPLOY.md must include cron example"
+    assert "systemd" in content.lower(), "DEPLOY.md must include systemd example"
+
+
+# ---------------------------------------------------------------------------
+# Test 16: DEPLOY.md cron example contains weekday-only pattern reference
+# ---------------------------------------------------------------------------
+
+def test_deploy_md_cron_contains_weekday_pattern(base_config, tmp_path):
+    """DEPLOY.md cron section must reference the weekdays-only pattern (1-5)."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    content = (output_dir / "DEPLOY.md").read_text()
+    assert "1-5" in content, \
+        "DEPLOY.md cron example must contain '1-5' (weekdays-only cron pattern)"
+
+
+# ---------------------------------------------------------------------------
+# Test 17: DEPLOY.md systemd example contains [Unit], [Service], [Install]
+# ---------------------------------------------------------------------------
+
+def test_deploy_md_systemd_has_required_sections(base_config, tmp_path):
+    """DEPLOY.md systemd example must contain [Unit], [Service], [Install] sections."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    content = (output_dir / "DEPLOY.md").read_text()
+    assert "[Unit]" in content, "DEPLOY.md must have [Unit] systemd section"
+    assert "[Service]" in content, "DEPLOY.md must have [Service] systemd section"
+    assert "[Install]" in content, "DEPLOY.md must have [Install] systemd section"
+
+
+# ---------------------------------------------------------------------------
+# Test 18: run.sh is created as a bash launcher script
+# ---------------------------------------------------------------------------
+
+def test_run_sh_created_as_bash_launcher(base_config, tmp_path):
+    """run.sh must be created with shebang and 'python bot.py' command."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    run_sh = output_dir / "run.sh"
+    assert run_sh.exists(), "run.sh must be created in output_dir"
+
+    content = run_sh.read_text()
+    assert content.startswith("#!/bin/bash"), "run.sh must start with #!/bin/bash shebang"
+    assert "python bot.py" in content, "run.sh must contain 'python bot.py'"
+
+
+# ---------------------------------------------------------------------------
+# Test 19: run.sh loads .env before running bot
+# ---------------------------------------------------------------------------
+
+def test_run_sh_loads_env_file(base_config, tmp_path):
+    """run.sh must source .env to load environment variables."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    content = (output_dir / "run.sh").read_text()
+    assert "source .env" in content or ". .env" in content, \
+        "run.sh must source .env to load environment variables"
+
+
+# ---------------------------------------------------------------------------
+# Test 20: No generated file contains hardcoded API key values
+# ---------------------------------------------------------------------------
+
+def test_no_generated_file_contains_hardcoded_api_keys(base_config, tmp_path):
+    """No generated file may contain a real API key pattern (ALPACA_API_KEY=PKxxx...)."""
+    from scripts.build_generator import generate_build
+    import re
+
+    output_dir = tmp_path / "standalone"
+    generate_build(base_config, output_dir)
+
+    # Pattern: ALPACA_API_KEY or ALPACA_SECRET_KEY with a non-empty value after =
+    hardcoded_pattern = re.compile(
+        r'ALPACA_(API|SECRET)_KEY=\S+'
+    )
+
+    for fpath in output_dir.rglob("*"):
+        if not fpath.is_file():
+            continue
+        try:
+            content = fpath.read_text()
+        except (UnicodeDecodeError, PermissionError):
+            continue
+        match = hardcoded_pattern.search(content)
+        assert match is None, \
+            f"File {fpath.name} contains hardcoded API key: {match.group()}"
+
+
+# ---------------------------------------------------------------------------
+# Test 21: files_generated list includes all new deployment artifact files
+# ---------------------------------------------------------------------------
+
+def test_files_generated_includes_deployment_artifacts(base_config, tmp_path):
+    """files_generated return value must include .env.template, .gitignore, requirements.txt, DEPLOY.md, run.sh."""
+    from scripts.build_generator import generate_build
+
+    output_dir = tmp_path / "standalone"
+    result = generate_build(base_config, output_dir)
+
+    files = result["files_generated"]
+    assert ".env.template" in files, "files_generated must include .env.template"
+    assert ".gitignore" in files, "files_generated must include .gitignore"
+    assert "requirements.txt" in files, "files_generated must include requirements.txt"
+    assert "DEPLOY.md" in files, "files_generated must include DEPLOY.md"
+    assert "run.sh" in files, "files_generated must include run.sh"
