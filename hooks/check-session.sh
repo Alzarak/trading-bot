@@ -1,7 +1,7 @@
 #!/bin/bash
 # Stop hook — checks if a trading session was active and warns about open positions.
 # Uses exit 0 with JSON output for control decisions.
-set -euo pipefail
+set -uo pipefail
 
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 DATA_DIR="${CLAUDE_PLUGIN_DATA:-${PLUGIN_ROOT}/.plugin-data}"
