@@ -31,11 +31,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User can select autonomous risk mode (Claude decides aggression) or fixed risk parameters during setup
   4. Running `/initialize` produces a `config.json` file that all downstream commands can consume without modification
   5. Plugin installs Python dependencies on session start (ALP-04 MCP server DROPPED -- SDK-only approach)
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md — Plugin scaffold: manifest, directory structure, SessionStart hook, and tests
-- [ ] 01-02-PLAN.md — Domain knowledge: trading-rules skill, reference files, config schema tests
+- [x] 01-02-PLAN.md — Domain knowledge: trading-rules skill, reference files, config schema tests
 - [ ] 01-03-PLAN.md — /initialize wizard command with adaptive beginner/expert flow
 
 ### Phase 2: Risk Management
@@ -126,7 +126,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Plugin Foundation | 1/3 | In Progress|  |
+| 1. Plugin Foundation | 2/3 | In Progress|  |
 | 2. Risk Management | 0/2 | Not started | - |
 | 3. Core Trading Loop | 0/4 | Not started | - |
 | 4. Build Command | 0/2 | Not started | - |

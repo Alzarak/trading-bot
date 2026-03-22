@@ -24,9 +24,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Alpaca Integration
 
-- [ ] **ALP-01**: Plugin authenticates with Alpaca API using environment variables (paper and live keys)
-- [ ] **ALP-02**: Plugin supports paper trading mode with Alpaca's paper endpoint
-- [ ] **ALP-03**: Plugin supports live trading mode with Alpaca's live endpoint
+- [x] **ALP-01**: Plugin authenticates with Alpaca API using environment variables (paper and live keys)
+- [x] **ALP-02**: Plugin supports paper trading mode with Alpaca's paper endpoint
+- [x] **ALP-03**: Plugin supports live trading mode with Alpaca's live endpoint
 - [x] **ALP-04**: Alpaca MCP server is configured in `.mcp.json` for real-time market data access within Claude
 - [ ] **ALP-05**: Plugin queries Alpaca market clock to enforce market hours (9:30am-4:00pm ET)
 
@@ -84,10 +84,10 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PLUG-02**: Separate agent for market scanning/analysis
 - [ ] **PLUG-03**: Separate agent for risk management validation
 - [ ] **PLUG-04**: Separate agent for trade execution
-- [ ] **PLUG-05**: Trading rules skill provides domain context to all agents
+- [x] **PLUG-05**: Trading rules skill provides domain context to all agents
 - [x] **PLUG-06**: SessionStart hook installs Python dependencies into plugin data directory
 - [ ] **PLUG-07**: PreToolUse hook validates safety constraints before order submission
-- [ ] **PLUG-08**: Reference files document trading strategies, risk rules, and Alpaca API patterns
+- [x] **PLUG-08**: Reference files document trading strategies, risk rules, and Alpaca API patterns
 
 ### Observability
 
@@ -101,7 +101,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **STATE-01**: Bot persists trading state to SQLite database (positions, orders, trade history)
 - [ ] **STATE-02**: Bot recovers from crashes by reconciling SQLite state against Alpaca positions
-- [ ] **STATE-03**: Bot maintains configuration in JSON file editable without code changes
+- [x] **STATE-03**: Bot maintains configuration in JSON file editable without code changes
 
 ### Distribution
 
@@ -159,9 +159,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-10 | Phase 5 | Pending |
 | CMD-11 | Phase 5 | Pending |
 | CMD-12 | Phase 1 | Pending |
-| ALP-01 | Phase 1 | Pending |
-| ALP-02 | Phase 1 | Pending |
-| ALP-03 | Phase 1 | Pending |
+| ALP-01 | Phase 1 | Complete |
+| ALP-02 | Phase 1 | Complete |
+| ALP-03 | Phase 1 | Complete |
 | ALP-04 | Phase 1 | Complete |
 | ALP-05 | Phase 3 | Pending |
 | ORD-01 | Phase 3 | Pending |
@@ -198,10 +198,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLUG-02 | Phase 5 | Pending |
 | PLUG-03 | Phase 2 | Pending |
 | PLUG-04 | Phase 5 | Pending |
-| PLUG-05 | Phase 1 | Pending |
+| PLUG-05 | Phase 1 | Complete |
 | PLUG-06 | Phase 1 | Complete |
 | PLUG-07 | Phase 2 | Pending |
-| PLUG-08 | Phase 1 | Pending |
+| PLUG-08 | Phase 1 | Complete |
 | OBS-01 | Phase 3 | Pending |
 | OBS-02 | Phase 3 | Pending |
 | OBS-03 | Phase 6 | Pending |
@@ -209,7 +209,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OBS-05 | Phase 6 | Pending |
 | STATE-01 | Phase 3 | Pending |
 | STATE-02 | Phase 3 | Pending |
-| STATE-03 | Phase 1 | Pending |
+| STATE-03 | Phase 1 | Complete |
 | DIST-01 | Phase 6 | Pending |
 | DIST-02 | Phase 6 | Pending |
 | DIST-03 | Phase 6 | Pending |

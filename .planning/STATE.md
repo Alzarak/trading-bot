@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-plugin-foundation 01-01-PLAN.md
-last_updated: "2026-03-22T00:02:13.016Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-22T00:04:48.798Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 01 (plugin-foundation) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 2 of 3
 
 *Updated after each plan completion*
 | Phase 01-plugin-foundation P01 | 3 | 2 tasks | 10 files |
+| Phase 01 P02 | 5 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - [Phase 01-plugin-foundation]: ALP-04 (Alpaca MCP server) dropped per user decision — all Alpaca access via alpaca-py SDK only
 - [Phase 01-plugin-foundation]: SHA256 hash-based reinstall detection in SessionStart hook — definitive content-based check across plugin updates
 - [Phase 01-plugin-foundation]: uv used for dependency installation in plugin hook — faster than pip, already required by broader tooling
+- [Phase 01]: Trading-rules skill set to user-invocable=false — auto-loads on trading topics without polluting /skill menu
+- [Phase 01]: Config schema tests (Plan 02) written before wizard (Plan 03) — tests define what the wizard must produce
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T00:02:13.006Z
-Stopped at: Completed 01-plugin-foundation 01-01-PLAN.md
+Last session: 2026-03-22T00:04:48.789Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
