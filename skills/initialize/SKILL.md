@@ -56,11 +56,29 @@ First, check if `uvx` is available (required for the MCP server):
 command -v uvx &>/dev/null && echo "UVX_FOUND" || echo "UVX_NOT_FOUND"
 ```
 
-**If UVX_NOT_FOUND:** Skip the MCP question entirely. Set `use_mcp = false`. Inform the user:
+**If UVX_NOT_FOUND:** Still ask the MCP question (below), but if the user says Yes, offer to install `uv` for them:
 
-> "Note: The Alpaca MCP server requires `uvx` (part of `uv`). Since it's not installed, the bot will use the Python SDK for all API calls. To enable MCP later, install uv (https://docs.astral.sh/uv/getting-started/installation/) and re-run `/trading-bot:initialize --reset`."
+> "`uvx` is required for the MCP server but isn't installed. Would you like me to install it now?
+> 1. Yes — install uv (runs: `curl -LsSf https://astral.sh/uv/install.sh | sh`)
+> 2. No — skip MCP, use Python SDK only"
 
-**If UVX_FOUND:** Use AskUserQuestion to ask:
+If they say Yes, run:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then verify it worked:
+
+```bash
+export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH" && command -v uvx &>/dev/null && echo "UVX_INSTALLED" || echo "UVX_FAILED"
+```
+
+If `UVX_INSTALLED`: continue with MCP setup below. If `UVX_FAILED`: set `use_mcp = false` and tell the user installation failed — they can install manually and re-run `/trading-bot:initialize --reset`.
+
+If they say No: set `use_mcp = false` and continue.
+
+**Use AskUserQuestion to ask:**
 
 > "Would you like to enable the Alpaca MCP server? This gives Claude direct access to 44 Alpaca API tools (market data, positions, account info) during conversations.
 > 1. Yes — enable MCP server (recommended, requires API keys)
