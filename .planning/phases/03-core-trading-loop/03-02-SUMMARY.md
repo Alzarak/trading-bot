@@ -141,6 +141,17 @@ None — no external service configuration required.
 - All 4 order types tested and verified against mocked RiskManager
 - ATR stop formula verified with exact values — matches risk-rules.md specification
 
+## Self-Check: PASSED
+
+- scripts/order_executor.py: FOUND
+- agents/market-analyst.md: FOUND
+- agents/trade-executor.md: FOUND
+- tests/test_order_executor.py: FOUND
+- tests/test_agents.py: FOUND
+- .planning/phases/03-core-trading-loop/03-02-SUMMARY.md: FOUND
+- commit cf2184c (feat): FOUND
+- commit 6e98295 (test): FOUND
+
 ---
 *Phase: 03-core-trading-loop*
 *Completed: 2026-03-22*
