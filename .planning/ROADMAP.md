@@ -64,13 +64,14 @@ Plans:
   3. Bot recovers from a crash by reading SQLite state and reconciling against Alpaca's live positions on startup — no phantom positions
   4. Bot closes or logs all open positions on SIGINT/SIGTERM graceful shutdown
   5. Bot respects market hours by checking Alpaca's market clock before each loop iteration and skips iteration if market is closed
-**Plans**: TBD
+**Plans:** 5 plans
 
 Plans:
-- [ ] 03-01: Market scanner, technical indicators (pandas-ta), and signal generator
-- [ ] 03-02: Order executor with idempotency keys and bracket/trailing stop logic
-- [ ] 03-03: SQLite state store, crash recovery, portfolio tracker, and graceful shutdown
-- [ ] 03-04: Strategy modules (momentum, mean reversion, breakout, VWAP) as configurable plugins
+- [ ] 03-01-PLAN.md — Signal dataclass, MarketScanner with all 6 technical indicators (pandas-ta), market clock check
+- [ ] 03-02-PLAN.md — OrderExecutor with 4 order types, ATR-based stops, market-analyst and trade-executor agent definitions
+- [ ] 03-03-PLAN.md — SQLite StateStore with crash recovery, position reconciliation, PDT migration from JSON
+- [ ] 03-04-PLAN.md — Strategy modules (momentum, mean reversion, breakout, VWAP) as pluggable BaseStrategy implementations
+- [ ] 03-05-PLAN.md — PortfolioTracker, bot.py main loop (APScheduler), graceful shutdown, RiskManager state_store integration
 
 ### Phase 4: Build Command
 **Goal**: Users can run `/build` to generate a complete, tailored set of Python trading scripts from their config — ready to run — with no secrets written to any generated file
@@ -128,7 +129,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 |-------|----------------|--------|-----------|
 | 1. Plugin Foundation | 3/3 | Complete   | 2026-03-22 |
 | 2. Risk Management | 2/2 | Complete   | 2026-03-22 |
-| 3. Core Trading Loop | 0/4 | Not started | - |
+| 3. Core Trading Loop | 0/5 | Not started | - |
 | 4. Build Command | 0/2 | Not started | - |
 | 5. Run Command and Claude Analysis | 0/2 | Not started | - |
 | 6. Distribution and Observability | 0/2 | Not started | - |
