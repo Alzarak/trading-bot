@@ -31,12 +31,16 @@ class RiskManager:
         trading_client: Alpaca TradingClient instance (or mock).
     """
 
-    def __init__(self, config: dict, trading_client) -> None:
+    def __init__(self, config: dict, trading_client, state_store=None) -> None:
         self.config = config
         self.client = trading_client
+        self.state_store = state_store
         self.circuit_breaker_triggered: bool = False
         self.start_equity: float | None = None
-        self._pdt_trades: list[dict] = self._load_pdt_trades()
+        if state_store is None:
+            self._pdt_trades: list[dict] = self._load_pdt_trades()
+        else:
+            self._pdt_trades = []  # Not used when state_store provided
 
     # ------------------------------------------------------------------
     # Session initialization
@@ -214,10 +218,13 @@ class RiskManager:
         today = datetime.strptime(date, "%Y-%m-%d")
         window_start = today - timedelta(days=7)
 
-        count = sum(
-            1 for trade in self._pdt_trades
-            if datetime.strptime(trade["date"], "%Y-%m-%d") > window_start
-        )
+        if self.state_store is not None:
+            count = self.state_store.get_day_trade_count(window_start.strftime("%Y-%m-%d"))
+        else:
+            count = sum(
+                1 for trade in self._pdt_trades
+                if datetime.strptime(trade["date"], "%Y-%m-%d") > window_start
+            )
 
         if count >= 3:
             logger.warning(
@@ -242,10 +249,14 @@ class RiskManager:
             symbol: Ticker symbol that was day-traded.
             date: Trade date as 'YYYY-MM-DD' string.
         """
-        entry = {"symbol": symbol, "date": date}
-        self._pdt_trades.append(entry)
-        self._save_pdt_trades()
-        logger.info("Day trade recorded: {} on {}", symbol, date)
+        if self.state_store is not None:
+            self.state_store.record_day_trade(symbol, date)
+            logger.info("Day trade recorded via state_store: {} on {}", symbol, date)
+        else:
+            entry = {"symbol": symbol, "date": date}
+            self._pdt_trades.append(entry)
+            self._save_pdt_trades()
+            logger.info("Day trade recorded: {} on {}", symbol, date)
 
     def _load_pdt_trades(self) -> list[dict]:
         """Read existing PDT trades from pdt_trades.json in CLAUDE_PLUGIN_DATA."""
