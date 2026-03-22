@@ -10,10 +10,11 @@ import math
 import pandas as pd
 from loguru import logger
 
+from scripts.strategies.base import BaseStrategy
 from scripts.types import Signal
 
 
-class BreakoutStrategy:
+class BreakoutStrategy(BaseStrategy):
     """Breakout strategy: buy resistance breaks with volume confirmation.
 
     Entry (BUY): price > 20-bar high (prior bar's rolling max) AND volume > 1.5x 20-bar avg.

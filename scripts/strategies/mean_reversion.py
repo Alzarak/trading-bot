@@ -10,10 +10,11 @@ import math
 import pandas as pd
 from loguru import logger
 
+from scripts.strategies.base import BaseStrategy
 from scripts.types import Signal
 
 
-class MeanReversionStrategy:
+class MeanReversionStrategy(BaseStrategy):
     """Mean reversion strategy: buy oversold price deviations, sell at mean.
 
     Entry (BUY): price <= lower BB AND RSI < 30 AND price within 2% of lower band.

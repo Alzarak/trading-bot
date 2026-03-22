@@ -13,10 +13,11 @@ import math
 import pandas as pd
 from loguru import logger
 
+from scripts.strategies.base import BaseStrategy
 from scripts.types import Signal
 
 
-class VWAPStrategy:
+class VWAPStrategy(BaseStrategy):
     """VWAP reversion strategy: buy statistical deviations below VWAP.
 
     Entry (BUY): price > 1.5% below VWAP AND RSI < 40 AND time 10:00-15:00 ET.

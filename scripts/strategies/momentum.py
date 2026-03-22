@@ -10,10 +10,11 @@ import math
 import pandas as pd
 from loguru import logger
 
+from scripts.strategies.base import BaseStrategy
 from scripts.types import Signal
 
 
-class MomentumStrategy:
+class MomentumStrategy(BaseStrategy):
     """Momentum strategy: trend-following via RSI, MACD, EMA crossover, and volume.
 
     Entry (BUY): RSI crosses above 30 AND MACD histogram positive AND EMA_short >
