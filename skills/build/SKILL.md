@@ -1,6 +1,6 @@
 ---
 name: build
-description: "This skill should be used when the user runs /build, wants to generate standalone trading bot scripts, or needs to create a deployable Python trading bot from their config."
+description: "This skill should be used when the user runs /trading-bot:build, wants to generate standalone trading bot scripts, or needs to create a deployable Python trading bot from their config."
 ---
 
 Generate a standalone trading bot from the user's configuration. Fully automated — no questions needed.
@@ -13,7 +13,7 @@ Verify config.json exists:
 test -f "${CLAUDE_PLUGIN_DATA}/config.json" && echo "EXISTS" || echo "NOT_FOUND"
 ```
 
-If NOT_FOUND: tell the user to run `/initialize` first. Stop.
+If NOT_FOUND: tell the user to run `/trading-bot:initialize` first. Stop.
 
 ## Run Generator
 
@@ -53,4 +53,4 @@ Provide deployment instructions:
 
 **Security reminder:** `.env` contains API keys. The `.gitignore` prevents accidental commits. Bot defaults to paper trading (`ALPACA_PAPER=true`).
 
-To run directly from Claude Code instead, use `/run`.
+To run directly from Claude Code instead, use `/trading-bot:run`.

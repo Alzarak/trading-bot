@@ -1,6 +1,6 @@
 ---
 name: initialize
-description: "This skill should be used when the user runs /initialize, wants to set up the trading bot, configure preferences, or generate config.json for the first time."
+description: "This skill should be used when the user runs /trading-bot:initialize, wants to set up the trading bot, configure preferences, or generate config.json for the first time."
 ---
 
 Guide the user through the trading bot setup wizard. Follow every step in order. Re-prompt with an explanation if the user provides invalid input.
@@ -88,4 +88,4 @@ Write `config.json` to `${CLAUDE_PLUGIN_DATA}/config.json` using Bash heredoc (e
 
 **Never store API keys in config.json — keys go in .env only.**
 
-Display summary table, then tell the user to run `/build` or `/run` next.
+Display summary table, then tell the user to run `/trading-bot:build` or `/trading-bot:run` next.

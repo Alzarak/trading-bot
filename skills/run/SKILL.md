@@ -1,6 +1,6 @@
 ---
 name: run
-description: "This skill should be used when the user runs /run, wants to start the trading loop, begin autonomous trading, or execute the bot in agent or standalone mode."
+description: "This skill should be used when the user runs /trading-bot:run, wants to start the trading loop, begin autonomous trading, or execute the bot in agent or standalone mode."
 ---
 
 Start the autonomous trading bot. Follow steps in order.
@@ -13,7 +13,7 @@ Verify config.json exists:
 test -f "${CLAUDE_PLUGIN_DATA}/config.json" && echo "EXISTS" || echo "NOT_FOUND"
 ```
 
-If NOT_FOUND: tell the user to run `/initialize` first. Stop.
+If NOT_FOUND: tell the user to run `/trading-bot:initialize` first. Stop.
 
 Read the config to determine `watchlist`, `autonomy_mode`, and `strategies`.
 
@@ -32,7 +32,7 @@ Verify standalone directory exists, then run:
 cd "${CLAUDE_PLUGIN_DATA}/trading-bot-standalone" && python bot.py
 ```
 
-If directory missing: tell user to run `/build` first.
+If directory missing: tell user to run `/trading-bot:build` first.
 
 ---
 
