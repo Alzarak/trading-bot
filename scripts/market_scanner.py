@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import pandas as pd
+import pandas_ta  # noqa: F401 — registers df.ta accessor on import
 from loguru import logger
 
 # Import alpaca-py conditionally so unit tests can run without it installed
@@ -157,6 +158,10 @@ class MarketScanner:
         bb = self.bb_period
         bb_std = self.bb_std_dev
 
+        # pandas-ta 0.4.71b0 names BBands columns as BBL_{period}_{std}_{std}
+        # (the std appears twice — this is a quirk of the beta release)
+        bb_suffix = f"{bb}_{bb_std}_{bb_std}"
+
         return {
             "rsi": f"RSI_{self.rsi_period}",
             "macd": f"MACD_{f}_{sl}_{sig}",
@@ -165,9 +170,9 @@ class MarketScanner:
             "ema_short": f"EMA_{self.ema_short}",
             "ema_long": f"EMA_{self.ema_long}",
             "atr": f"ATRr_{self.atr_period}",
-            "bb_lower": f"BBL_{bb}_{bb_std}",
-            "bb_middle": f"BBM_{bb}_{bb_std}",
-            "bb_upper": f"BBU_{bb}_{bb_std}",
+            "bb_lower": f"BBL_{bb_suffix}",
+            "bb_middle": f"BBM_{bb_suffix}",
+            "bb_upper": f"BBU_{bb_suffix}",
             "vwap": "VWAP_D",
         }
 
