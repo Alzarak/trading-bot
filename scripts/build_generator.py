@@ -1,0 +1,292 @@
+"""Build generator for the trading bot plugin.
+
+Reads config.json and produces a standalone trading bot directory with only the
+user's selected strategies and proper relative imports.
+
+Usage:
+    from scripts.build_generator import generate_build
+    from pathlib import Path
+
+    config = json.loads(Path("config.json").read_text())
+    result = generate_build(config, Path("trading-bot-standalone"))
+    print(result)
+"""
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Strategy name -> class name mapping
+# ---------------------------------------------------------------------------
+
+_STRATEGY_CLASS_MAP: dict[str, str] = {
+    "momentum": "MomentumStrategy",
+    "mean_reversion": "MeanReversionStrategy",
+    "breakout": "BreakoutStrategy",
+    "vwap": "VWAPStrategy",
+}
+
+# Source files for core modules (relative to scripts/ directory)
+_CORE_FILES = [
+    "bot.py",
+    "types.py",
+    "market_scanner.py",
+    "order_executor.py",
+    "risk_manager.py",
+    "state_store.py",
+    "portfolio_tracker.py",
+]
+
+# Strategy source files (relative to scripts/strategies/ directory)
+_STRATEGY_FILES = ["momentum.py", "mean_reversion.py", "breakout.py", "vwap.py"]
+
+
+# ---------------------------------------------------------------------------
+# Import rewriting helpers
+# ---------------------------------------------------------------------------
+
+def _rewrite_imports(content: str) -> str:
+    """Replace 'from scripts.X' with 'from X' for standalone usage.
+
+    Also rewrites 'from scripts.strategies.X' to 'from strategies.X'.
+    This is safe because all source files consistently use 'from scripts.'
+    for cross-module imports.
+
+    Args:
+        content: Source file content.
+
+    Returns:
+        Content with rewritten imports.
+    """
+    content = content.replace("from scripts.strategies.", "from strategies.")
+    content = content.replace("from scripts.", "from ")
+    return content
+
+
+def _rewrite_bot_config_loading(content: str) -> str:
+    """Rewrite bot.py's load_config() to read config.json from cwd only.
+
+    The plugin-embedded bot.py reads from CLAUDE_PLUGIN_DATA first, falling
+    back to cwd. The standalone version always reads from cwd (the user has
+    the standalone directory on their server).
+
+    Replaces the two-path load_config() with a simple single-path version.
+
+    Args:
+        content: bot.py source content.
+
+    Returns:
+        Content with simplified config loading.
+    """
+    old_func = '''\
+def load_config() -> dict:
+    """Load config.json from CLAUDE_PLUGIN_DATA or the current directory.
+
+    Returns:
+        Parsed configuration dict.
+
+    Raises:
+        FileNotFoundError: If config.json is not found in either location.
+        json.JSONDecodeError: If the file contains invalid JSON.
+    """
+    data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "."))
+    config_path = data_dir / "config.json"
+
+    if not config_path.exists():
+        # Fall back to current directory
+        config_path = Path("config.json")
+
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"config.json not found in {data_dir} or current directory. "
+            "Run /initialize to generate your configuration."
+        )
+
+    logger.info("Loading config from {}", config_path)
+    return json.loads(config_path.read_text())'''
+
+    new_func = '''\
+def load_config() -> dict:
+    """Load config.json from the current directory.
+
+    Returns:
+        Parsed configuration dict.
+
+    Raises:
+        FileNotFoundError: If config.json is not found.
+        json.JSONDecodeError: If the file contains invalid JSON.
+    """
+    config_path = Path("config.json")
+
+    if not config_path.exists():
+        raise FileNotFoundError(
+            "config.json not found in current directory. "
+            "Ensure config.json is in the same directory as bot.py."
+        )
+
+    logger.info("Loading config from {}", config_path)
+    return json.loads(config_path.read_text())'''
+
+    if old_func in content:
+        content = content.replace(old_func, new_func)
+
+    return content
+
+
+# ---------------------------------------------------------------------------
+# __init__.py generator
+# ---------------------------------------------------------------------------
+
+def _generate_strategies_init(strategy_names: list[str]) -> str:
+    """Generate a filtered strategies/__init__.py for selected strategies only.
+
+    Args:
+        strategy_names: List of strategy names from config["strategies"][*]["name"].
+
+    Returns:
+        Content for strategies/__init__.py with only selected strategies registered.
+    """
+    lines = [
+        '"""Strategy package for the standalone trading bot.',
+        "",
+        "Provides the BaseStrategy ABC and STRATEGY_REGISTRY for the selected",
+        "strategies only. Generated by the /build command.",
+        '"""',
+        "from strategies.base import BaseStrategy",
+        "",
+    ]
+
+    # Import selected strategy classes
+    registry_entries = []
+    for name in strategy_names:
+        class_name = _STRATEGY_CLASS_MAP.get(name)
+        if class_name is None:
+            continue
+        module_name = name  # file name matches strategy name
+        lines.append(f"from strategies.{module_name} import {class_name}")
+        registry_entries.append((name, class_name))
+
+    lines.append("")
+    lines.append("")
+    lines.append("# Registry mapping config names to strategy classes.")
+    lines.append("# Only contains strategies selected during /initialize.")
+    lines.append("STRATEGY_REGISTRY: dict[str, type[BaseStrategy]] = {")
+    for name, class_name in registry_entries:
+        lines.append(f'    "{name}": {class_name},')
+    lines.append("}")
+    lines.append("")
+    lines.append('__all__ = ["BaseStrategy", "STRATEGY_REGISTRY"]')
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def generate_build(config: dict, output_dir: Path | None = None) -> dict:
+    """Generate a standalone trading bot directory from the given config.
+
+    Copies all source files from the scripts/ directory (located relative to
+    this module), rewrites imports to be relative, filters strategies to only
+    those selected in config["strategies"], and generates a dynamic
+    strategies/__init__.py with only the selected entries.
+
+    Args:
+        config: Parsed config.json dict (from /initialize wizard).
+        output_dir: Destination path for the standalone directory.
+                    Defaults to "trading-bot-standalone" in the current directory.
+
+    Returns:
+        Dict with keys:
+        - "output_dir": str path to the generated directory
+        - "files_generated": list of relative file paths created
+        - "strategies_included": list of strategy names included
+    """
+    if output_dir is None:
+        output_dir = Path("trading-bot-standalone")
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Locate the scripts/ source directory (this file lives in scripts/)
+    scripts_dir = Path(__file__).parent
+    strategies_src_dir = scripts_dir / "strategies"
+
+    files_generated: list[str] = []
+
+    # ------------------------------------------------------------------
+    # 1. Copy and rewrite core files
+    # ------------------------------------------------------------------
+    for fname in _CORE_FILES:
+        src = scripts_dir / fname
+        if not src.exists():
+            continue
+
+        content = src.read_text()
+        content = _rewrite_imports(content)
+
+        if fname == "bot.py":
+            content = _rewrite_bot_config_loading(content)
+
+        dest = output_dir / fname
+        dest.write_text(content)
+        files_generated.append(fname)
+
+    # ------------------------------------------------------------------
+    # 2. Create strategies/ subdirectory
+    # ------------------------------------------------------------------
+    strategies_out_dir = output_dir / "strategies"
+    strategies_out_dir.mkdir(exist_ok=True)
+
+    # Copy base.py
+    base_src = strategies_src_dir / "base.py"
+    if base_src.exists():
+        content = base_src.read_text()
+        content = _rewrite_imports(content)
+        (strategies_out_dir / "base.py").write_text(content)
+        files_generated.append("strategies/base.py")
+
+    # Determine selected strategy names
+    strategy_names: list[str] = []
+    for strat in config.get("strategies", []):
+        name = strat.get("name", "")
+        if name in _STRATEGY_CLASS_MAP:
+            strategy_names.append(name)
+
+    # Copy only the selected strategy files
+    for strat_file in _STRATEGY_FILES:
+        strat_name = strat_file.replace(".py", "")
+        if strat_name not in strategy_names:
+            continue
+
+        src = strategies_src_dir / strat_file
+        if not src.exists():
+            continue
+
+        content = src.read_text()
+        content = _rewrite_imports(content)
+        (strategies_out_dir / strat_file).write_text(content)
+        files_generated.append(f"strategies/{strat_file}")
+
+    # Generate filtered __init__.py
+    init_content = _generate_strategies_init(strategy_names)
+    (strategies_out_dir / "__init__.py").write_text(init_content)
+    files_generated.append("strategies/__init__.py")
+
+    # ------------------------------------------------------------------
+    # 3. Write config.json to output directory
+    # ------------------------------------------------------------------
+    import json
+
+    config_out = output_dir / "config.json"
+    config_out.write_text(json.dumps(config, indent=2))
+    files_generated.append("config.json")
+
+    # ------------------------------------------------------------------
+    # 4. Return summary
+    # ------------------------------------------------------------------
+    return {
+        "output_dir": str(output_dir),
+        "files_generated": files_generated,
+        "strategies_included": strategy_names,
+    }
