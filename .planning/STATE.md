@@ -134,8 +134,14 @@ None yet.
 - [Research flag] Phase 5: PreToolUse hook interception with MCP tool calls needs verification against live plugin docs
 - [Research gap] Wash sale rule: Determine during Phase 3 planning whether 31-day re-entry block is v1 or deferred
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260322-14r | fix the session startup hook error | 2026-03-22 | 2402eeb | [260322-14r-fix-the-session-startup-hook-error](./quick/260322-14r-fix-the-session-startup-hook-error/) |
+
 ## Session Continuity
 
-Last session: 2026-03-22T02:38:31.981Z
+Last activity: 2026-03-22 - Completed quick task 260322-14r: fix the session startup hook error
 Stopped at: Completed 06-01-PLAN.md
 Resume file: None
