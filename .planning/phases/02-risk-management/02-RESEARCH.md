@@ -37,7 +37,7 @@ ALP-04 (Alpaca MCP server) has been DROPPED. No `.mcp.json` exists. All Alpaca a
 | POS-01 | Bot sizes positions as percentage of account equity (configurable) | Formula: `position_value = equity * (max_position_pct / 100)`; `shares = floor(position_value / price)` |
 | POS-02 | Bot enforces maximum position count limit | `client.get_all_positions()` count check before entry; `max_positions` default 10 |
 | PLUG-03 | Separate agent for risk management validation | `agents/risk-manager.md` with YAML frontmatter; model: sonnet |
-| PLUG-07 | PreToolUse hook validates safety constraints before order submission | `hooks/hooks.json` PreToolUse entry; bash script reads stdin JSON, exits 2 to block |
+| PLUG-07 | PreToolUse hook validates safety constraints before order submission | `hooks/hooks.json` PreToolUse entry; bash script reads stdin JSON, exit 0 with permissionDecision deny JSON to block |
 </phase_requirements>
 
 ---
