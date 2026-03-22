@@ -99,11 +99,11 @@ Plans:
   3. Claude's recommendations pass through the deterministic Python risk manager before any order is submitted — Claude never calls an Alpaca order tool directly
   4. Every Claude trade decision is written to the audit log with full reasoning inspectable after the session
   5. The loop runs in both Claude Code agent mode and standalone Python mode from the same generated scripts
-**Plans**: 2 plans
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-01: `/run` command, market-analyst agent, and trade-executor agent wiring
-- [ ] 05-02: Claude analysis integration (structured JSON prompts, confidence gating, audit logging)
+- [ ] 05-01-PLAN.md — /run command, ClaudeAnalyzer module, ClaudeRecommendation type, and market-analyst agent update
+- [ ] 05-02-PLAN.md — AuditLogger for Claude decisions, bot.py Claude integration, trade-executor agent update
 
 ### Phase 6: Distribution and Observability
 **Goal**: The plugin is publishable to the Claude Code marketplace, users receive end-of-day summaries and key event notifications, and all runtime observability is in place for unattended operation
