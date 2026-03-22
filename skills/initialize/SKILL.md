@@ -50,7 +50,17 @@ Ask for starting capital in USD. Store as `budget_usd` (positive number).
 
 ## Step 4 — Alpaca MCP Server
 
-Use AskUserQuestion to ask:
+First, check if `uvx` is available (required for the MCP server):
+
+```bash
+command -v uvx &>/dev/null && echo "UVX_FOUND" || echo "UVX_NOT_FOUND"
+```
+
+**If UVX_NOT_FOUND:** Skip the MCP question entirely. Set `use_mcp = false`. Inform the user:
+
+> "Note: The Alpaca MCP server requires `uvx` (part of `uv`). Since it's not installed, the bot will use the Python SDK for all API calls. To enable MCP later, install uv (https://docs.astral.sh/uv/getting-started/installation/) and re-run `/trading-bot:initialize --reset`."
+
+**If UVX_FOUND:** Use AskUserQuestion to ask:
 
 > "Would you like to enable the Alpaca MCP server? This gives Claude direct access to 44 Alpaca API tools (market data, positions, account info) during conversations.
 > 1. Yes — enable MCP server (recommended, requires API keys)
