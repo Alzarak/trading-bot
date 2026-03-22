@@ -11,7 +11,7 @@ set -e
 export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 
 # Resolve project root: use CLAUDE_PLUGIN_ROOT when available (plugin mode),
-# otherwise derive from the script's location (dev mode — script lives in scripts/).
+# otherwise derive from the script's location (dev mode — script lives in hooks/).
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 
 # Resolve data directory: use CLAUDE_PLUGIN_DATA when available (plugin mode),
