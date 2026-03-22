@@ -50,7 +50,7 @@ The plugin supports two ways to interact with Alpaca, configured during `/tradin
 
 **MCP mode** (`use_mcp: true` in config):
 - Alpaca MCP server provides 44 tools directly to Claude (market data, positions, account info)
-- Added via `claude mcp add alpaca` during setup — lives in the project's `.mcp.json`
+- Added to the project via `claude mcp add alpaca` during setup
 - Use MCP tools for real-time queries during conversations (quotes, positions, account status)
 - Order execution still goes through Python OrderExecutor — MCP is read-only for market data
 - Paper trading is the default (`ALPACA_PAPER_TRADE` defaults to `True` in the MCP server)

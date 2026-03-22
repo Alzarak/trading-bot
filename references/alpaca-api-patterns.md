@@ -35,7 +35,9 @@ data_client = StockHistoricalDataClient(
 **Required environment variables:**
 - `ALPACA_API_KEY` — Alpaca API key ID
 - `ALPACA_SECRET_KEY` — Alpaca API secret key
-- `ALPACA_PAPER` — `"true"` for paper trading, `"false"` for live
+- `ALPACA_PAPER` — `"true"` for paper trading, `"false"` for live (used by the bot's pydantic-settings)
+
+> **Note:** The Alpaca MCP server uses a different env var: `ALPACA_PAPER_TRADE` (defaults to `True`). The bot's `ALPACA_PAPER` and the MCP server's `ALPACA_PAPER_TRADE` are independent — each controls its own system.
 
 **Loading with pydantic-settings:**
 ```python

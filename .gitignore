@@ -20,6 +20,9 @@ htmlcov/
 .env
 *.env.local
 
+# MCP server config (created by /initialize if user opts in — contains API key refs)
+.mcp.json
+
 # Plugin runtime data (not committed — lives in CLAUDE_PLUGIN_DATA)
 config.json
 requirements.txt.sha256
