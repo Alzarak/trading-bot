@@ -1,19 +1,35 @@
 #!/usr/bin/env bash
 # SessionStart hook: Install Python dependencies if requirements.txt changed.
 # Uses SHA256 hash comparison to skip unnecessary reinstalls.
+#
+# Handles two execution contexts:
+#   Plugin mode:  CLAUDE_PLUGIN_ROOT and CLAUDE_PLUGIN_DATA are set by Claude Code
+#   Dev mode:     Both env vars are unset; fall back to script's own parent directory
 set -e
 
 # Ensure uv is in PATH (may be in user-level install dirs)
 export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT}"
-DATA_DIR="${CLAUDE_PLUGIN_DATA}"
+# Resolve project root: use CLAUDE_PLUGIN_ROOT when available (plugin mode),
+# otherwise derive from the script's location (dev mode — script lives in scripts/).
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+
+# Resolve data directory: use CLAUDE_PLUGIN_DATA when available (plugin mode),
+# otherwise keep venv and hash file local to the project (dev mode).
+DATA_DIR="${CLAUDE_PLUGIN_DATA:-${PLUGIN_ROOT}/.plugin-data}"
+
 VENV_DIR="${DATA_DIR}/venv"
 REQ_FILE="${PLUGIN_ROOT}/requirements.txt"
 REQ_HASH_FILE="${DATA_DIR}/requirements.txt.sha256"
 
 # Ensure data directory exists
 mkdir -p "${DATA_DIR}"
+
+# Guard: requirements.txt must exist before we try to hash it
+if [ ! -f "${REQ_FILE}" ]; then
+  echo "[trading-bot] requirements.txt not found at ${REQ_FILE}, skipping dependency install."
+  exit 0
+fi
 
 # Compute current hash
 CURRENT_HASH=$(sha256sum "${REQ_FILE}" | awk '{print $1}')
