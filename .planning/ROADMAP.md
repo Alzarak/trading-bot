@@ -48,11 +48,11 @@ Plans:
   3. Position sizing is calculated as a configurable percentage of account equity, never a fixed dollar amount
   4. Any order submission attempt is intercepted by the PreToolUse hook, which rejects orders that violate safety constraints before they reach Alpaca
   5. All Alpaca API calls are wrapped with exponential backoff and network failures during order submission do not create ghost positions
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: Risk manager Python module (circuit breaker, position sizing, PDT counter, max position limits)
-- [ ] 02-02: PreToolUse safety hook and risk-manager agent
+- [ ] 02-01-PLAN.md — RiskManager class: circuit breaker, position sizing, PDT tracking, max positions, retry with ghost prevention
+- [ ] 02-02-PLAN.md — PreToolUse safety hook (validate-order.sh) and risk-manager agent definition
 
 ### Phase 3: Core Trading Loop
 **Goal**: The full Market Scanner → Signal Generator → Risk Manager → Order Executor → Portfolio Tracker pipeline runs end-to-end in paper mode with one working strategy, crash recovery, and full trade logging
