@@ -9,18 +9,18 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Plugin Commands
 
-- [ ] **CMD-01**: User can run `/initialize` to start an interactive setup wizard that captures all trading preferences
-- [ ] **CMD-02**: Initialize wizard adapts questions based on beginner vs expert user
-- [ ] **CMD-03**: Initialize wizard captures: risk tolerance, budget, paper vs live, autonomy level, strategies, market hours, ticker watchlist
-- [ ] **CMD-04**: Initialize wizard includes autonomous risk mode option where Claude decides aggression per trade
-- [ ] **CMD-05**: Initialize wizard outputs a complete config file that all other commands consume
+- [x] **CMD-01**: User can run `/initialize` to start an interactive setup wizard that captures all trading preferences
+- [x] **CMD-02**: Initialize wizard adapts questions based on beginner vs expert user
+- [x] **CMD-03**: Initialize wizard captures: risk tolerance, budget, paper vs live, autonomy level, strategies, market hours, ticker watchlist
+- [x] **CMD-04**: Initialize wizard includes autonomous risk mode option where Claude decides aggression per trade
+- [x] **CMD-05**: Initialize wizard outputs a complete config file that all other commands consume
 - [ ] **CMD-06**: User can run `/build` to generate all Python trading scripts from initialize config
 - [ ] **CMD-07**: Build command generates tailored scripts based on selected strategies and preferences
 - [ ] **CMD-08**: Build command enforces `.env` pattern for API keys — never writes literal secrets to generated files
 - [ ] **CMD-09**: Build command auto-creates `.gitignore` with `.env` and sensitive files excluded
 - [ ] **CMD-10**: User can run `/run` to start the autonomous trading loop
 - [ ] **CMD-11**: Run command supports both Claude Code agent mode and standalone Python execution
-- [ ] **CMD-12**: User can select from momentum, mean reversion, breakout, and VWAP strategies during initialize
+- [x] **CMD-12**: User can select from momentum, mean reversion, breakout, and VWAP strategies during initialize
 
 ### Alpaca Integration
 
@@ -147,18 +147,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CMD-01 | Phase 1 | Pending |
-| CMD-02 | Phase 1 | Pending |
-| CMD-03 | Phase 1 | Pending |
-| CMD-04 | Phase 1 | Pending |
-| CMD-05 | Phase 1 | Pending |
+| CMD-01 | Phase 1 | Complete |
+| CMD-02 | Phase 1 | Complete |
+| CMD-03 | Phase 1 | Complete |
+| CMD-04 | Phase 1 | Complete |
+| CMD-05 | Phase 1 | Complete |
 | CMD-06 | Phase 4 | Pending |
 | CMD-07 | Phase 4 | Pending |
 | CMD-08 | Phase 4 | Pending |
 | CMD-09 | Phase 4 | Pending |
 | CMD-10 | Phase 5 | Pending |
 | CMD-11 | Phase 5 | Pending |
-| CMD-12 | Phase 1 | Pending |
+| CMD-12 | Phase 1 | Complete |
 | ALP-01 | Phase 1 | Complete |
 | ALP-02 | Phase 1 | Complete |
 | ALP-03 | Phase 1 | Complete |
