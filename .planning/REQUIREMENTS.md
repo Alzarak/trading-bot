@@ -14,8 +14,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CMD-03**: Initialize wizard captures: risk tolerance, budget, paper vs live, autonomy level, strategies, market hours, ticker watchlist
 - [x] **CMD-04**: Initialize wizard includes autonomous risk mode option where Claude decides aggression per trade
 - [x] **CMD-05**: Initialize wizard outputs a complete config file that all other commands consume
-- [ ] **CMD-06**: User can run `/build` to generate all Python trading scripts from initialize config
-- [ ] **CMD-07**: Build command generates tailored scripts based on selected strategies and preferences
+- [x] **CMD-06**: User can run `/build` to generate all Python trading scripts from initialize config
+- [x] **CMD-07**: Build command generates tailored scripts based on selected strategies and preferences
 - [ ] **CMD-08**: Build command enforces `.env` pattern for API keys — never writes literal secrets to generated files
 - [ ] **CMD-09**: Build command auto-creates `.gitignore` with `.env` and sensitive files excluded
 - [ ] **CMD-10**: User can run `/run` to start the autonomous trading loop
@@ -152,8 +152,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-03 | Phase 1 | Complete |
 | CMD-04 | Phase 1 | Complete |
 | CMD-05 | Phase 1 | Complete |
-| CMD-06 | Phase 4 | Pending |
-| CMD-07 | Phase 4 | Pending |
+| CMD-06 | Phase 4 | Complete |
+| CMD-07 | Phase 4 | Complete |
 | CMD-08 | Phase 4 | Pending |
 | CMD-09 | Phase 4 | Pending |
 | CMD-10 | Phase 5 | Pending |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-05-PLAN.md
-last_updated: "2026-03-22T01:41:46.234Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-22T01:52:38.739Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 12
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** After initial setup, the bot trades autonomously without human intervention — scanning markets, making decisions (using Claude for analysis), and executing trades on a loop.
-**Current focus:** Phase 03 — core-trading-loop
+**Current focus:** Phase 04 — build-command
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 04 (build-command) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Plan: Not started
 | Phase 03 P01 | 292 | 2 tasks | 4 files |
 | Phase 03-core-trading-loop P04 | 6 | 2 tasks | 7 files |
 | Phase 03 P05 | 5 | 3 tasks | 5 files |
+| Phase 04-build-command P01 | 3 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,9 @@ Recent decisions affecting current work:
 - [Phase 03]: PortfolioTracker dual-sink: loguru NDJSON file + SQLite for redundant trade audit trail
 - [Phase 03]: RiskManager state_store=None default: backward-compatible PDT delegation to SQLite when provided
 - [Phase 03]: BackgroundScheduler.shutdown(wait=True): ensures current scan cycle completes before graceful position closing
+- [Phase 04-build-command]: Simple str.replace('from scripts.', 'from ') for import rewriting — safe because all source files use consistent pattern
+- [Phase 04-build-command]: Generated strategies/__init__.py built dynamically (not copied) to filter STRATEGY_REGISTRY to only selected strategies
+- [Phase 04-build-command]: Generated bot.py load_config() stripped of CLAUDE_PLUGIN_DATA fallback — standalone version reads from cwd only
 
 ### Pending Todos
 
@@ -113,6 +117,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T01:37:44.681Z
-Stopped at: Completed 03-05-PLAN.md
+Last session: 2026-03-22T01:52:38.729Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None

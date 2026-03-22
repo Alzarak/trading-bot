@@ -86,7 +86,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Build generator module and /build slash command
+- [x] 04-01-PLAN.md — Build generator module and /build slash command
 - [ ] 04-02-PLAN.md — Secret management, .gitignore, standalone runner, deployment instructions
 
 ### Phase 5: Run Command and Claude Analysis
@@ -130,6 +130,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Plugin Foundation | 3/3 | Complete   | 2026-03-22 |
 | 2. Risk Management | 2/2 | Complete   | 2026-03-22 |
 | 3. Core Trading Loop | 5/5 | Complete   | 2026-03-22 |
-| 4. Build Command | 0/2 | Not started | - |
+| 4. Build Command | 1/2 | In Progress|  |
 | 5. Run Command and Claude Analysis | 0/2 | Not started | - |
 | 6. Distribution and Observability | 0/2 | Not started | - |
