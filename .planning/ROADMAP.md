@@ -99,10 +99,10 @@ Plans:
   3. Claude's recommendations pass through the deterministic Python risk manager before any order is submitted — Claude never calls an Alpaca order tool directly
   4. Every Claude trade decision is written to the audit log with full reasoning inspectable after the session
   5. The loop runs in both Claude Code agent mode and standalone Python mode from the same generated scripts
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 05-01-PLAN.md — /run command, ClaudeAnalyzer module, ClaudeRecommendation type, and market-analyst agent update
+- [x] 05-01-PLAN.md — /run command, ClaudeAnalyzer module, ClaudeRecommendation type, and market-analyst agent update
 - [ ] 05-02-PLAN.md — AuditLogger for Claude decisions, bot.py Claude integration, trade-executor agent update
 
 ### Phase 6: Distribution and Observability
@@ -131,5 +131,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Risk Management | 2/2 | Complete   | 2026-03-22 |
 | 3. Core Trading Loop | 5/5 | Complete   | 2026-03-22 |
 | 4. Build Command | 2/2 | Complete   | 2026-03-22 |
-| 5. Run Command and Claude Analysis | 0/2 | Not started | - |
+| 5. Run Command and Claude Analysis | 1/2 | In Progress|  |
 | 6. Distribution and Observability | 0/2 | Not started | - |

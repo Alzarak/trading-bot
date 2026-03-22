@@ -18,8 +18,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CMD-07**: Build command generates tailored scripts based on selected strategies and preferences
 - [x] **CMD-08**: Build command enforces `.env` pattern for API keys — never writes literal secrets to generated files
 - [x] **CMD-09**: Build command auto-creates `.gitignore` with `.env` and sensitive files excluded
-- [ ] **CMD-10**: User can run `/run` to start the autonomous trading loop
-- [ ] **CMD-11**: Run command supports both Claude Code agent mode and standalone Python execution
+- [x] **CMD-10**: User can run `/run` to start the autonomous trading loop
+- [x] **CMD-11**: Run command supports both Claude Code agent mode and standalone Python execution
 - [x] **CMD-12**: User can select from momentum, mean reversion, breakout, and VWAP strategies during initialize
 
 ### Alpaca Integration
@@ -72,9 +72,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Claude AI Integration
 
-- [ ] **AI-01**: Claude analyzes each trade opportunity with structured JSON output (action, confidence, reasoning)
-- [ ] **AI-02**: Claude accesses real-time market data via Alpaca MCP server during analysis
-- [ ] **AI-03**: Claude operates as strategy-level analyst — never submits orders directly
+- [x] **AI-01**: Claude analyzes each trade opportunity with structured JSON output (action, confidence, reasoning)
+- [x] **AI-02**: Claude accesses real-time market data via Alpaca MCP server during analysis
+- [x] **AI-03**: Claude operates as strategy-level analyst — never submits orders directly
 - [ ] **AI-04**: All Claude recommendations pass through deterministic Python risk manager before execution
 - [ ] **AI-05**: Claude's reasoning is logged for every trade decision (inspectable audit trail)
 
@@ -156,8 +156,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-07 | Phase 4 | Complete |
 | CMD-08 | Phase 4 | Complete |
 | CMD-09 | Phase 4 | Complete |
-| CMD-10 | Phase 5 | Pending |
-| CMD-11 | Phase 5 | Pending |
+| CMD-10 | Phase 5 | Complete |
+| CMD-11 | Phase 5 | Complete |
 | CMD-12 | Phase 1 | Complete |
 | ALP-01 | Phase 1 | Complete |
 | ALP-02 | Phase 1 | Complete |
@@ -189,9 +189,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRAT-03 | Phase 3 | Complete |
 | STRAT-04 | Phase 3 | Complete |
 | STRAT-05 | Phase 3 | Complete |
-| AI-01 | Phase 5 | Pending |
-| AI-02 | Phase 5 | Pending |
-| AI-03 | Phase 5 | Pending |
+| AI-01 | Phase 5 | Complete |
+| AI-02 | Phase 5 | Complete |
+| AI-03 | Phase 5 | Complete |
 | AI-04 | Phase 5 | Pending |
 | AI-05 | Phase 5 | Pending |
 | PLUG-01 | Phase 1 | Complete |
