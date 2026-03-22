@@ -25,6 +25,10 @@ Market Data → MarketScanner → Technical Indicators → Claude Analysis
 
 **Key invariant:** Claude never submits orders directly. All recommendations route through deterministic Python risk checks.
 
+**Two Alpaca modes** (chosen during `/trading-bot:initialize`):
+- **MCP mode**: Alpaca MCP server added to project via `claude mcp add`, gives Claude 44 real-time API tools
+- **SDK-only mode**: All API calls through Python alpaca-py SDK, no MCP server
+
 ### References
 
 Detailed documentation in `references/`:

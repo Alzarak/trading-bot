@@ -10,13 +10,13 @@ A Claude Code plugin that automates stock day trading on US markets via the Alpa
 - **Paper & live trading** — Defaults to paper ($100K simulated); one config change for live
 - **Two deployment modes** — Run inside Claude Code with AI analysis, or `/build` a standalone bot for any server
 - **Full audit trail** — Every signal, risk decision, and order is logged
-- **Alpaca MCP integration** — 43 Alpaca API tools available to Claude for real-time market data
+- **Optional Alpaca MCP integration** — 44 Alpaca API tools available to Claude for real-time market data (opt-in during setup)
 
 ## Requirements
 
 - [Claude Code](https://claude.ai/code) with plugin support
 - Python 3.12+
-- [uv](https://docs.astral.sh/uv/) (for dependency management and the Alpaca MCP server)
+- [uv](https://docs.astral.sh/uv/) (for dependency management; also required if enabling MCP server)
 - [Alpaca](https://alpaca.markets/) account (free tier works for paper trading)
 
 ## Installation
@@ -90,7 +90,6 @@ Claude acts as a **strategy-level analyst only** — all recommendations pass th
 ```
 trading-bot/
 ├── .claude-plugin/plugin.json   # Plugin manifest
-├── .mcp.json                    # Alpaca MCP server (43 API tools for Claude)
 ├── commands/                    # /initialize, /build, /run (slash command stubs)
 ├── agents/                      # market-analyst, risk-manager, trade-executor
 │   ├── market-analyst.md        # Sonnet — technical indicator analysis
@@ -134,7 +133,7 @@ trading-bot/
 |-------|------|---------|
 | **SessionStart** | Command | Installs Python dependencies into plugin venv |
 | **PreToolUse** (Bash) | Command | Gates order submissions — checks circuit breaker and PDT count |
-| **Stop** | Prompt | Verifies stop-losses are in place before ending a trading session |
+| **Stop** | Command | Checks for open positions and circuit breaker status before ending a session |
 
 ## Configuration
 
@@ -150,14 +149,18 @@ After `/initialize`, your config is stored as JSON with these key settings:
 | `max_positions` | Max concurrent positions | `10` |
 | `max_daily_loss_pct` | Circuit breaker threshold | varies |
 | `watchlist` | Symbols to scan | `AAPL, MSFT, GOOGL, AMZN, SPY` |
+| `use_mcp` | Enable Alpaca MCP server (44 real-time tools) | `false` |
 
 API keys are read from environment variables or `.env`:
 
 ```
 ALPACA_API_KEY=your_key
 ALPACA_SECRET_KEY=your_secret
-ALPACA_PAPER=true
 ```
+
+### Alpaca MCP Server (Optional)
+
+During `/initialize`, you can opt into the Alpaca MCP server. If enabled, it's added to your project via `claude mcp add alpaca` and gives Claude direct access to 44 Alpaca API tools (quotes, positions, account info). Paper trading is the default. If you skip MCP, all API calls go through the Python alpaca-py SDK.
 
 ## Safety
 

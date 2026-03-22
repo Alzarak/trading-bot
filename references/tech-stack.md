@@ -21,7 +21,7 @@
 | Skills | `skills/` | `/initialize`, `/build`, `/run` entry points + auto-loaded trading-rules |
 | Agents | `agents/` | market-analyst (sonnet), risk-manager (haiku), trade-executor (haiku) |
 | Hooks | `hooks/hooks.json` | SessionStart deps install, PreToolUse order gating, Stop session verification |
-| MCP Server | `.mcp.json` | Alpaca MCP server — 43 API tools for real-time market data |
+| MCP Server | opt-in via `/initialize` | Alpaca MCP server (44 tools) — added to project via `claude mcp add` if user opts in |
 
 ## Supporting Libraries
 

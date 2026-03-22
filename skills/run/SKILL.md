@@ -15,7 +15,11 @@ test -f "${CLAUDE_PLUGIN_DATA}/config.json" && echo "EXISTS" || echo "NOT_FOUND"
 
 If NOT_FOUND: tell the user to run `/trading-bot:initialize` first. Stop.
 
-Read the config to determine `watchlist`, `autonomy_mode`, and `strategies`.
+Read the config to determine `watchlist`, `autonomy_mode`, `strategies`, and `use_mcp`.
+
+If `use_mcp` is true, Alpaca MCP tools are available for real-time market data queries (account info, positions, quotes) during the trading loop. Use MCP tools to supplement indicator data when available.
+
+If `use_mcp` is false or not set, all market data comes through the Python alpaca-py SDK via MarketScanner. Do not attempt to call MCP tools.
 
 ## Mode Selection
 

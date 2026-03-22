@@ -48,7 +48,38 @@ Ask for starting capital in USD. Store as `budget_usd` (positive number).
 **Intermediate/Expert:** Ask paper vs live trading.
 - Live → collect ALPACA_API_KEY and ALPACA_SECRET_KEY for `.env` file. If user declines, default to paper.
 
-## Step 4 — Strategies
+## Step 4 — Alpaca MCP Server
+
+Use AskUserQuestion to ask:
+
+> "Would you like to enable the Alpaca MCP server? This gives Claude direct access to 44 Alpaca API tools (market data, positions, account info) during conversations.
+> 1. Yes — enable MCP server (recommended, requires API keys)
+> 2. No — use Python SDK only (the bot scripts handle all API calls)"
+
+**If Yes (`use_mcp = true`):**
+
+Check if API keys were already collected in Step 3. If not, ask for them now:
+
+> "The MCP server needs your Alpaca API credentials. Get free keys at https://app.alpaca.markets/
+> - ALPACA_API_KEY:
+> - ALPACA_SECRET_KEY:"
+
+Then use Bash to add the MCP server to the user's project:
+
+```bash
+claude mcp add alpaca \
+  --scope project \
+  --transport stdio \
+  -- uvx alpaca-mcp-server serve
+```
+
+Tell the user: "Alpaca MCP server added to your project. The server defaults to paper trading mode. Run `/mcp` to verify it's connected."
+
+**If No (`use_mcp = false`):**
+
+Tell the user: "MCP server skipped. The bot will use the Python alpaca-py SDK for all API calls. You can enable MCP later by re-running `/trading-bot:initialize --reset`."
+
+## Step 5 — Strategies
 
 Read `references/trading-strategies.md` for strategy descriptions. Present all four:
 
@@ -62,13 +93,13 @@ Read `references/trading-strategies.md` for strategy descriptions. Present all f
 
 Build strategy objects with default params from the reference file. Assign equal weights.
 
-## Step 5 — Autonomy Mode
+## Step 6 — Autonomy Mode
 
 **Beginner:** Auto-set `autonomy_mode = "fixed_params"`.
 
 **Intermediate/Expert:** Ask fixed parameters vs Claude decides (adjusts position size within bounds).
 
-## Step 6 — Market Hours and Watchlist
+## Step 7 — Market Hours and Watchlist
 
 Default `market_hours_only = true`. Experts can override.
 
@@ -84,8 +115,8 @@ Compute derived values from `risk_tolerance`:
 
 Set `autonomy_level`: beginner→`notify_only`, intermediate→`semi_auto`, expert→`full_auto`.
 
-Write `config.json` to `${CLAUDE_PLUGIN_DATA}/config.json` using Bash heredoc (env vars must be shell-expanded). Write `.env` template to `${CLAUDE_PLUGIN_DATA}/.env`.
+Write `config.json` to `${CLAUDE_PLUGIN_DATA}/config.json` using Bash heredoc (env vars must be shell-expanded). Include `use_mcp` (true/false) in the config. Write `.env` template to `${CLAUDE_PLUGIN_DATA}/.env`.
 
 **Never store API keys in config.json — keys go in .env only.**
 
-Display summary table, then tell the user to run `/trading-bot:build` or `/trading-bot:run` next.
+Display summary table including MCP status, then tell the user to run `/trading-bot:build` or `/trading-bot:run` next.

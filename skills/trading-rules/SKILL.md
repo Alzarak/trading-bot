@@ -44,12 +44,26 @@ These rules apply to ALL trading operations, regardless of strategy, autonomy mo
 - No averaging down into losing positions under any autonomy mode
 - Trailing stops trail by `ATR * multiplier` as price moves in favorable direction
 
-### Alpaca API Conventions
+### Alpaca API — Two Modes
 
+The plugin supports two ways to interact with Alpaca, configured during `/trading-bot:initialize`:
+
+**MCP mode** (`use_mcp: true` in config):
+- Alpaca MCP server provides 44 tools directly to Claude (market data, positions, account info)
+- Added via `claude mcp add alpaca` during setup — lives in the project's `.mcp.json`
+- Use MCP tools for real-time queries during conversations (quotes, positions, account status)
+- Order execution still goes through Python OrderExecutor — MCP is read-only for market data
+- Paper trading is the default (`ALPACA_PAPER_TRADE` defaults to `True` in the MCP server)
+
+**SDK-only mode** (`use_mcp: false` in config):
+- All API calls go through the Python `alpaca-py` SDK via MarketScanner and OrderExecutor
+- No MCP server configured — Claude cannot query Alpaca directly
+- Do not attempt to call `mcp__alpaca__*` tools in this mode
+
+**Common conventions (both modes):**
 - Use `alpaca-py` SDK (not deprecated `alpaca-trade-api`)
 - `TradingClient(api_key, secret_key, paper=True)` for paper trading (safe default)
-- `TradingClient(api_key, secret_key, paper=False)` for live trading (requires explicit opt-in)
-- API keys loaded from environment variables via pydantic-settings — never hardcoded in scripts
+- API keys loaded from environment variables via pydantic-settings — never hardcoded
 - All API calls wrapped with exponential backoff retry: 1s / 2s / 4s / 8s, max 4 retries
 - Skip retry on HTTP 422 (validation error) — retrying will not fix a malformed request
 - Use `client_order_id=str(uuid.uuid4())` on every order for idempotency
