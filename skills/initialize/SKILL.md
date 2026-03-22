@@ -169,16 +169,16 @@ If they say No: set `use_mcp = false` and continue.
 
 The MCP server also reads from the `.env` file. Tell the user: "The MCP server will use the same API keys from your `.env` file."
 
-Use Bash to add the MCP server to the user's project:
+Use Bash to add the MCP server to the user's project. The wrapper script loads API keys from `./trading-bot/.env` automatically:
 
 ```bash
 claude mcp add alpaca \
   --scope project \
   --transport stdio \
-  -- uvx alpaca-mcp-server serve
+  -- bash "${CLAUDE_PLUGIN_ROOT}/scripts/start-mcp.sh"
 ```
 
-Tell the user: "Alpaca MCP server added to your project. The server defaults to paper trading mode. Run `/mcp` to verify it's connected."
+Tell the user: "Alpaca MCP server registered. It won't connect until you add your API keys to `./trading-bot/.env` and start a new session. Once your keys are in place, run `/mcp` to verify it's connected."
 
 **If No (`use_mcp = false`):**
 
