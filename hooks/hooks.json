@@ -22,17 +22,6 @@
           }
         ]
       }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "Check if a trading session was active in this conversation. If trading occurred, verify all positions have stop-losses and note any pending signals, then return {\"decision\": \"block\", \"reason\": \"reason\"}. If safe or no trading occurred, return {\"decision\": \"allow\", \"reason\": \"Safe to stop\"}.",
-            "timeout": 30
-          }
-        ]
-      }
     ]
   }
 }
