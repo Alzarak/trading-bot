@@ -1,3 +1,4 @@
+<!-- Plugin: trading-bot v1.0.0 | Install: claude plugin install <github-url> -->
 ---
 name: initialize
 description: "Interactive setup wizard -- configure the trading bot preferences and generate config.json"
