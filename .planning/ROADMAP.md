@@ -83,11 +83,11 @@ Plans:
   3. `/build` auto-creates `.gitignore` that excludes `.env` and other sensitive files
   4. Generated scripts can run standalone on a VPS or server without Claude Code installed
   5. Generated artifacts include cron entry or systemd unit file instructions for unattended server execution
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Template rendering engine and config-to-script generation
-- [ ] 04-02: Secret management (.env pattern), .gitignore generation, and standalone runner artifacts
+- [ ] 04-01-PLAN.md — Build generator module and /build slash command
+- [ ] 04-02-PLAN.md — Secret management, .gitignore, standalone runner, deployment instructions
 
 ### Phase 5: Run Command and Claude Analysis
 **Goal**: Users can run `/run` to start the autonomous trading loop via Claude Code agents, with Claude acting as a strategy-level reasoning layer that analyzes trade opportunities and returns structured JSON recommendations — never submitting orders directly
@@ -99,7 +99,7 @@ Plans:
   3. Claude's recommendations pass through the deterministic Python risk manager before any order is submitted — Claude never calls an Alpaca order tool directly
   4. Every Claude trade decision is written to the audit log with full reasoning inspectable after the session
   5. The loop runs in both Claude Code agent mode and standalone Python mode from the same generated scripts
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 05-01: `/run` command, market-analyst agent, and trade-executor agent wiring
@@ -114,7 +114,7 @@ Plans:
   2. Plugin includes a valid `plugin.json` manifest with version, description, and dependency declarations
   3. Bot generates an end-of-day summary report showing P&L, trade count, win rate, and biggest winner/loser
   4. Bot sends a notification when the circuit breaker fires, at end-of-day, or on a large win/loss — via at least one configurable channel (Slack or email)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 06-01: `plugin.json` manifest, marketplace publishing, and installation verification
