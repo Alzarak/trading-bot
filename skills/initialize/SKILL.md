@@ -7,15 +7,67 @@ Guide the user through setting up their autonomous trading bot. This bot will sc
 
 Frame every question around configuring an autonomous system, not manual trading. Follow every step in order. Re-prompt with an explanation if the user provides invalid input.
 
-## Pre-check
+## Step 0 — Scaffold the Trading Bot Folder
 
-Use Bash to check whether `${CLAUDE_PLUGIN_DATA}/config.json` already exists:
+Before anything else, create the trading bot data directory and seed it with template files. This ensures the folder structure exists from the start.
+
+Use Bash to run:
 
 ```bash
-test -f "${CLAUDE_PLUGIN_DATA}/config.json" && echo "EXISTS" || echo "NOT_FOUND"
+BOT_DIR="$(pwd)/trading-bot"
+mkdir -p "${BOT_DIR}"
+
+# Seed empty config.json (will be filled after setup questions)
+if [ ! -f "${BOT_DIR}/config.json" ]; then
+  echo '{}' > "${BOT_DIR}/config.json"
+  echo "CREATED config.json"
+else
+  echo "EXISTS config.json"
+fi
+
+# Seed .env template (user fills in API keys)
+if [ ! -f "${BOT_DIR}/.env" ]; then
+  cat > "${BOT_DIR}/.env" << 'ENVEOF'
+# Alpaca API Credentials
+# Get your free keys at: https://app.alpaca.markets/
+# Both values are required — find them under API Keys in your Alpaca dashboard
+ALPACA_API_KEY=
+ALPACA_SECRET_KEY=
+
+# Paper trading mode (true = simulated, false = real money)
+ALPACA_PAPER=true
+ENVEOF
+  echo "CREATED .env"
+else
+  echo "EXISTS .env"
+fi
+
+# Seed empty context file (will be written after setup)
+if [ ! -f "${BOT_DIR}/setup-context.md" ]; then
+  echo '' > "${BOT_DIR}/setup-context.md"
+  echo "CREATED setup-context.md"
+else
+  echo "EXISTS setup-context.md"
+fi
 ```
 
-If it exists AND the user did NOT pass `--reset`: ask whether to reconfigure or keep the existing setup. If keeping, stop and confirm config is unchanged. If `--reset` was passed, proceed with fresh setup.
+Tell the user: "Created your trading bot folder with template files. Let's configure your bot."
+
+## Pre-check — Existing Config
+
+Check if `config.json` already has content (not just `{}`):
+
+```bash
+BOT_DIR="$(pwd)/trading-bot"
+CONTENT=$(cat "${BOT_DIR}/config.json" 2>/dev/null)
+if [ "$CONTENT" != "{}" ] && [ -n "$CONTENT" ]; then
+  echo "HAS_CONFIG"
+else
+  echo "EMPTY_CONFIG"
+fi
+```
+
+If `HAS_CONFIG` AND the user did NOT pass `--reset`: ask whether to reconfigure or keep the existing setup. If keeping, stop and confirm config is unchanged. If `--reset` was passed, proceed with fresh setup.
 
 ## Step 1 — Experience Level
 
@@ -67,11 +119,15 @@ Ask how much starting capital (in USD) the bot should trade with. Present these 
 
 Store as `budget_usd` (positive number, minimum 1).
 
-**Beginner:** Auto-set `paper_trading = true`. Inform the user paper mode is active.
+Ask whether the bot should trade with real money or paper (simulated) money:
 
-**Intermediate/Expert:** Ask paper vs live trading. Store as `paper_trading` (true/false).
+> "Should the bot trade with real money or paper money?
+> 1. Paper trading — simulated trades, no real money at risk (recommended for getting started)
+> 2. Live trading — real money, real trades"
 
-API keys are NOT collected interactively — they go in the `.env` file created in the Final Step. Tell the user: "You'll need your Alpaca API key and secret key. The setup will create a `.env` file where you add them. Get free keys at https://app.alpaca.markets/"
+Store as `paper_trading` (true/false). If they choose live, confirm once: "Just to confirm — the bot will place real trades with real money. You can switch to paper anytime by re-running setup."
+
+Tell the user: "Your `.env` file is already created at `./trading-bot/.env`. Add your Alpaca API key and secret key there — get free keys at https://app.alpaca.markets/"
 
 ## Step 5 — Alpaca MCP Server
 
@@ -173,7 +229,11 @@ Store as `discovery_mode`: `"auto"`, `"focused"`, or `"both"`.
 
 **If auto:** Set `watchlist` to `[]`. Tell the user: "The bot will scan market movers, volume leaders, and sector trends each session to find its own opportunities."
 
-## Final Step — Write Config
+## Final Step — Write Config, .env, and Context
+
+All files go to `./trading-bot/` in the user's current project directory.
+
+### 1. Update config.json
 
 Compute derived values from `risk_tolerance`:
 - conservative: `max_position_pct=5.0`, `max_daily_loss_pct=2.0`
@@ -182,33 +242,38 @@ Compute derived values from `risk_tolerance`:
 
 Set `autonomy_level` from `involvement_level`: `hands_off`→`full_auto`, `notify`→`notify_only`, `approve`→`approval_required`.
 
-Write `config.json` to `${CLAUDE_PLUGIN_DATA}/config.json` using Bash heredoc (env vars must be shell-expanded). Include `use_mcp` (true/false), `involvement_level`, `autonomy_mode`, and `discovery_mode` in the config.
+Write the full config to `./trading-bot/config.json` using Bash heredoc (env vars must be shell-expanded). Include all fields: `experience_level`, `involvement_level`, `autonomy_level`, `risk_tolerance`, `max_position_pct`, `max_daily_loss_pct`, `budget_usd`, `paper_trading`, `use_mcp`, `strategies`, `autonomy_mode`, `discovery_mode`, `watchlist`, `market_hours_only`.
 
 **Never store API keys in config.json — keys go in .env only.**
 
-Write `.env` to `${CLAUDE_PLUGIN_DATA}/.env` with this content:
+### 2. Update .env
 
-```
-# Alpaca API Credentials
-# Get your free keys at: https://app.alpaca.markets/
-# Both values are required — find them under API Keys in your Alpaca dashboard
-ALPACA_API_KEY=
-ALPACA_SECRET_KEY=
+Update `./trading-bot/.env` — set `ALPACA_PAPER` based on the user's paper/live choice from Step 4. Keep the `ALPACA_API_KEY` and `ALPACA_SECRET_KEY` fields as-is (user fills them in manually).
 
-# Paper trading mode (true = simulated, false = real money)
-ALPACA_PAPER=true
-```
+### 3. Write setup-context.md
 
-Set `ALPACA_PAPER` based on the user's paper/live choice from Step 4.
+Write `./trading-bot/setup-context.md` — this is the handoff document for the `/trading-bot:build` command. It captures the full picture of what was discussed and decided so the build phase knows exactly what to generate. Include:
 
-After writing, tell the user:
-"Created `.env` file at `${CLAUDE_PLUGIN_DATA}/.env`. **Before running the bot, add your Alpaca credentials:**
+- **User profile**: experience level, involvement preference, risk tolerance
+- **Trading setup**: budget, paper/live, MCP enabled/disabled
+- **Strategy plan**: which strategies, params, weights, autonomy mode
+- **Stock discovery**: discovery mode, watchlist (if any)
+- **Build instructions**: a clear summary of what the build command should generate based on all the above — what scripts, what behavior, what risk checks, what autonomy level
+
+Write this as structured markdown that the build skill can parse.
+
+### 4. Remind about .env
+
+Tell the user:
+"**Before running the bot, add your Alpaca credentials to `./trading-bot/.env`:**
 1. Go to https://app.alpaca.markets/ and sign up (free)
 2. Navigate to API Keys in your dashboard
 3. Copy your **API Key ID** and **Secret Key**
 4. Paste them into the `.env` file
 
 Both the API key and secret key are required — the bot and MCP server won't work without them."
+
+### 5. Summary and next steps
 
 Display summary table including MCP status and involvement mode, then set expectations:
 

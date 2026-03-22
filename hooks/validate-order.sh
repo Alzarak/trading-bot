@@ -12,9 +12,15 @@ set -uo pipefail
 # otherwise derive from the script's location (dev mode — script lives in hooks/).
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 
-# Resolve data directory: use CLAUDE_PLUGIN_DATA when available (plugin mode),
-# otherwise keep data local to the project (dev mode).
-DATA_DIR="${CLAUDE_PLUGIN_DATA:-${PLUGIN_ROOT}/.plugin-data}"
+# Resolve data directory: prefer project-level trading-bot/ folder,
+# fall back to CLAUDE_PLUGIN_DATA (plugin mode), then .plugin-data/ (dev mode).
+if [ -d "$(pwd)/trading-bot" ]; then
+  DATA_DIR="$(pwd)/trading-bot"
+elif [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
+  DATA_DIR="${CLAUDE_PLUGIN_DATA}"
+else
+  DATA_DIR="${PLUGIN_ROOT}/.plugin-data"
+fi
 
 # Circuit breaker flag path (written by risk_manager.py)
 CB_FLAG="${DATA_DIR}/circuit_breaker.flag"

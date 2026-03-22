@@ -25,6 +25,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from loguru import logger
 
 from apscheduler.triggers.cron import CronTrigger
+from scripts.paths import get_data_dir
 from scripts.audit_logger import AuditLogger
 from scripts.claude_analyzer import ClaudeAnalyzer
 from scripts.eod_report import EODReportGenerator
@@ -70,16 +71,16 @@ signal_module.signal(signal_module.SIGTERM, _handle_shutdown)
 # ------------------------------------------------------------------
 
 def load_config() -> dict:
-    """Load config.json from CLAUDE_PLUGIN_DATA or the current directory.
+    """Load config.json from the trading bot data directory.
 
     Returns:
         Parsed configuration dict.
 
     Raises:
-        FileNotFoundError: If config.json is not found in either location.
+        FileNotFoundError: If config.json is not found.
         json.JSONDecodeError: If the file contains invalid JSON.
     """
-    data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "."))
+    data_dir = get_data_dir()
     config_path = data_dir / "config.json"
 
     if not config_path.exists():
@@ -503,7 +504,7 @@ def main() -> None:
     Setup sequence:
     1. Load config.json
     2. Create Alpaca clients
-    3. Initialize StateStore (SQLite at CLAUDE_PLUGIN_DATA/trading.db)
+    3. Initialize StateStore (SQLite at ./trading-bot/trading.db)
     4. Crash recovery via reconcile_positions
     5. Create RiskManager with state_store (PDT delegated to SQLite)
     6. Initialize session (capture start equity, check circuit breaker)
@@ -525,7 +526,7 @@ def main() -> None:
     trading_client, data_client = create_clients(config)
 
     # 3. Initialize StateStore
-    data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "."))
+    data_dir = get_data_dir()
     db_path = data_dir / "trading.db"
     state_store = StateStore(db_path)
     logger.info("StateStore initialized at {}", db_path)

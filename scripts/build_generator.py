@@ -68,7 +68,7 @@ def _rewrite_imports(content: str) -> str:
 def _rewrite_bot_config_loading(content: str) -> str:
     """Rewrite bot.py's load_config() to read config.json from cwd only.
 
-    The plugin-embedded bot.py reads from CLAUDE_PLUGIN_DATA first, falling
+    The plugin-embedded bot.py reads from ./trading-bot/ first, falling
     back to cwd. The standalone version always reads from cwd (the user has
     the standalone directory on their server).
 
@@ -82,16 +82,16 @@ def _rewrite_bot_config_loading(content: str) -> str:
     """
     old_func = '''\
 def load_config() -> dict:
-    """Load config.json from CLAUDE_PLUGIN_DATA or the current directory.
+    """Load config.json from the trading bot data directory.
 
     Returns:
         Parsed configuration dict.
 
     Raises:
-        FileNotFoundError: If config.json is not found in either location.
+        FileNotFoundError: If config.json is not found.
         json.JSONDecodeError: If the file contains invalid JSON.
     """
-    data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "."))
+    data_dir = get_data_dir()
     config_path = data_dir / "config.json"
 
     if not config_path.exists():

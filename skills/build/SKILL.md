@@ -5,15 +5,46 @@ description: "This skill should be used when the user runs /trading-bot:build, w
 
 Generate a standalone trading bot from the user's configuration. Fully automated — no questions needed.
 
-## Pre-check
+## Pre-check — Required Files
 
-Verify config.json exists:
+Verify the trading bot folder and required files from `/trading-bot:initialize` exist:
 
 ```bash
-test -f "${CLAUDE_PLUGIN_DATA}/config.json" && echo "EXISTS" || echo "NOT_FOUND"
+BOT_DIR="$(pwd)/trading-bot"
+MISSING=""
+
+if [ ! -d "${BOT_DIR}" ]; then
+  MISSING="trading-bot folder"
+fi
+
+if [ ! -f "${BOT_DIR}/config.json" ] || [ "$(cat "${BOT_DIR}/config.json" 2>/dev/null)" = "{}" ]; then
+  MISSING="${MISSING:+${MISSING}, }config.json (empty or missing)"
+fi
+
+if [ ! -f "${BOT_DIR}/setup-context.md" ] || [ ! -s "${BOT_DIR}/setup-context.md" ]; then
+  MISSING="${MISSING:+${MISSING}, }setup-context.md (empty or missing)"
+fi
+
+if [ -n "$MISSING" ]; then
+  echo "MISSING: ${MISSING}"
+else
+  echo "ALL_FOUND"
+fi
 ```
 
-If NOT_FOUND: tell the user to run `/trading-bot:initialize` first. Stop.
+**If MISSING:** Stop and tell the user:
+"The build command needs files from the setup wizard. Missing: {list what's missing}. Please run `/trading-bot:initialize` first to configure your bot."
+
+Do NOT proceed with the build if any required files are missing.
+
+## Load Context
+
+Read both files to understand what to build:
+
+1. Read `./trading-bot/config.json` for structured configuration values
+2. Read `./trading-bot/setup-context.md` for the full setup plan and build instructions
+
+The setup-context.md contains the user's profile, strategy decisions, and explicit build instructions written by the initialize step. Follow those instructions.
 
 ## Run Generator
 
@@ -26,8 +57,8 @@ sys.path.insert(0, '.')
 from scripts.build_generator import generate_build
 from pathlib import Path
 
-config = json.loads(Path('${CLAUDE_PLUGIN_DATA}/config.json').read_text())
-output_dir = Path('${CLAUDE_PLUGIN_DATA}/trading-bot-standalone')
+config = json.loads(Path('./trading-bot/config.json').resolve().read_text())
+output_dir = Path('./trading-bot/standalone').resolve()
 result = generate_build(config, output_dir)
 print(json.dumps(result, indent=2))
 "

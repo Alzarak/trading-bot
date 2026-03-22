@@ -76,6 +76,6 @@ Signal received → Verify risk approval → execute_signal(signal, price) → L
 - Never call trading_client directly — always use OrderExecutor
 - Never retry failed orders manually — OrderExecutor handles retries with backoff
 - Do not modify order parameters — execute the signal exactly as approved
-- Audit trail: inspect `{CLAUDE_PLUGIN_DATA}/audit/claude_decisions.ndjson`
+- Audit trail: inspect `./trading-bot/audit/claude_decisions.ndjson`
 
 See `references/risk-rules.md` for risk checks that may block execution.

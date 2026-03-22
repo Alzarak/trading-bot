@@ -20,6 +20,7 @@ from pathlib import Path
 
 from loguru import logger
 
+from scripts.paths import get_data_dir
 from scripts.types import ClaudeRecommendation
 
 
@@ -35,12 +36,11 @@ class AuditLogger:
 
     Args:
         data_dir: Base directory for audit files. Defaults to
-                  CLAUDE_PLUGIN_DATA environment variable, or the current
-                  working directory if not set.
+                  the trading bot data directory (./trading-bot/ by default).
     """
 
     def __init__(self, data_dir: Path | None = None) -> None:
-        data_dir = data_dir or Path(os.environ.get("CLAUDE_PLUGIN_DATA", "."))
+        data_dir = data_dir or get_data_dir()
         self.audit_dir = data_dir / "audit"
         self.audit_dir.mkdir(parents=True, exist_ok=True)
         self.audit_file = self.audit_dir / "claude_decisions.ndjson"

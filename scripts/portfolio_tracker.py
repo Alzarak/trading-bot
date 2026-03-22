@@ -4,7 +4,7 @@ Logs every trade to a rotating loguru JSON file sink and to SQLite via StateStor
 Tracks P&L as (current_equity - start_equity) / start_equity percentage.
 
 Two log destinations for every trade:
-- Rotating JSON file at CLAUDE_PLUGIN_DATA/trades_{date}.log (90-day retention)
+- Rotating JSON file at ./trading-bot/trades_{date}.log (90-day retention)
 - SQLite trade_log table via StateStore.log_trade()
 """
 import os
@@ -14,7 +14,9 @@ from loguru import logger
 
 # Configure a trade-specific loguru sink at module level.
 # Only messages bound with trade=True flow to this sink.
-_data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "/tmp"))
+from scripts.paths import get_data_dir
+
+_data_dir = get_data_dir()
 logger.add(
     str(_data_dir / "trades_{time:YYYY-MM-DD}.log"),
     format="{message}",

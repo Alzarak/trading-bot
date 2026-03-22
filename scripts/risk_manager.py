@@ -16,6 +16,8 @@ from pathlib import Path
 
 from loguru import logger
 
+from scripts.paths import get_data_dir
+
 # Import conditionally to allow testing without alpaca-py installed
 try:
     from alpaca.common.exceptions import APIError
@@ -53,7 +55,7 @@ class RiskManager:
 
         Manual intervention is required to clear the flag before restarting.
         """
-        data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "/tmp"))
+        data_dir = get_data_dir()
         flag_file = data_dir / "circuit_breaker.flag"
 
         if flag_file.exists():
@@ -113,8 +115,8 @@ class RiskManager:
         return False
 
     def _persist_circuit_breaker(self) -> None:
-        """Write circuit_breaker.flag to CLAUDE_PLUGIN_DATA directory."""
-        data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "/tmp"))
+        """Write circuit_breaker.flag to the trading bot data directory."""
+        data_dir = get_data_dir()
         data_dir.mkdir(parents=True, exist_ok=True)
         flag_file = data_dir / "circuit_breaker.flag"
         flag_file.write_text("triggered")
@@ -267,8 +269,8 @@ class RiskManager:
             logger.info("Day trade recorded: {} on {}", symbol, date)
 
     def _load_pdt_trades(self) -> list[dict]:
-        """Read existing PDT trades from pdt_trades.json in CLAUDE_PLUGIN_DATA."""
-        data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "/tmp"))
+        """Read existing PDT trades from pdt_trades.json in the data directory."""
+        data_dir = get_data_dir()
         json_file = data_dir / "pdt_trades.json"
 
         if json_file.exists():
@@ -282,8 +284,8 @@ class RiskManager:
         return []
 
     def _save_pdt_trades(self) -> None:
-        """Write _pdt_trades list to pdt_trades.json in CLAUDE_PLUGIN_DATA."""
-        data_dir = Path(os.environ.get("CLAUDE_PLUGIN_DATA", "/tmp"))
+        """Write _pdt_trades list to pdt_trades.json in the data directory."""
+        data_dir = get_data_dir()
         data_dir.mkdir(parents=True, exist_ok=True)
         json_file = data_dir / "pdt_trades.json"
         json_file.write_text(json.dumps(self._pdt_trades, indent=2))

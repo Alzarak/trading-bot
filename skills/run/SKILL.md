@@ -10,10 +10,25 @@ Start the autonomous trading bot. Follow steps in order.
 Verify config.json exists:
 
 ```bash
-test -f "${CLAUDE_PLUGIN_DATA}/config.json" && echo "EXISTS" || echo "NOT_FOUND"
+BOT_DIR="$(pwd)/trading-bot"
+MISSING=""
+
+if [ ! -d "${BOT_DIR}" ]; then
+  MISSING="trading-bot folder"
+fi
+
+if [ ! -f "${BOT_DIR}/config.json" ] || [ "$(cat "${BOT_DIR}/config.json" 2>/dev/null)" = "{}" ]; then
+  MISSING="${MISSING:+${MISSING}, }config.json (empty or missing)"
+fi
+
+if [ -n "$MISSING" ]; then
+  echo "MISSING: ${MISSING}"
+else
+  echo "ALL_FOUND"
+fi
 ```
 
-If NOT_FOUND: tell the user to run `/trading-bot:initialize` first. Stop.
+**If MISSING:** Tell the user: "Missing: {list}. Please run `/trading-bot:initialize` first to set up your bot." Stop.
 
 Read the config to determine `watchlist`, `autonomy_mode`, `strategies`, and `use_mcp`.
 
@@ -33,7 +48,7 @@ Otherwise: run **AGENT MODE** (default).
 Verify standalone directory exists, then run:
 
 ```bash
-cd "${CLAUDE_PLUGIN_DATA}/trading-bot-standalone" && python bot.py
+cd "$(pwd)/trading-bot/standalone" && python bot.py
 ```
 
 If directory missing: tell user to run `/trading-bot:build` first.
