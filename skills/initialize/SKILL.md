@@ -69,11 +69,9 @@ Store as `budget_usd` (positive number, minimum 50).
 
 **Beginner:** Auto-set `paper_trading = true`. Inform the user paper mode is active.
 
-**Intermediate/Expert:** Ask paper vs live trading.
-- Live → collect API keys using **two separate AskUserQuestion calls with free-text input** (no menu options):
-  1. AskUserQuestion: "Please paste your ALPACA_API_KEY:" (free text, no options)
-  2. AskUserQuestion: "Please paste your ALPACA_SECRET_KEY:" (free text, no options)
-  Store both for the `.env` file. If user skips either, default to paper.
+**Intermediate/Expert:** Ask paper vs live trading. Store as `paper_trading` (true/false).
+
+API keys are NOT collected interactively — they go in the `.env` file created in the Final Step. Tell the user: "You'll need your Alpaca API key and secret key. The setup will create a `.env` file where you add them. Get free keys at https://app.alpaca.markets/"
 
 ## Step 5 — Alpaca MCP Server
 
@@ -113,18 +111,9 @@ If they say No: set `use_mcp = false` and continue.
 
 **If Yes (`use_mcp = true`):**
 
-Check if API keys were already collected in Step 3. If not, collect them now using **two separate AskUserQuestion calls** (one per key). Do NOT present keys as menu options — they must be typed as free text.
+The MCP server also reads from the `.env` file. Tell the user: "The MCP server will use the same API keys from your `.env` file."
 
-First, tell the user: "The MCP server needs your Alpaca API credentials. You can get free keys at https://app.alpaca.markets/"
-
-Then ask each key individually:
-
-**AskUserQuestion #1:** question="Please paste your ALPACA_API_KEY:" (no options — free text only)
-**AskUserQuestion #2:** question="Please paste your ALPACA_SECRET_KEY:" (no options — free text only)
-
-If the user skips either key (empty response, "skip", "none"), set `use_mcp = false` and tell them MCP is skipped — they can add keys later.
-
-Then use Bash to add the MCP server to the user's project:
+Use Bash to add the MCP server to the user's project:
 
 ```bash
 claude mcp add alpaca \
@@ -193,9 +182,33 @@ Compute derived values from `risk_tolerance`:
 
 Set `autonomy_level` from `involvement_level`: `hands_off`→`full_auto`, `notify`→`notify_only`, `approve`→`approval_required`.
 
-Write `config.json` to `${CLAUDE_PLUGIN_DATA}/config.json` using Bash heredoc (env vars must be shell-expanded). Include `use_mcp` (true/false), `involvement_level`, and `autonomy_mode` in the config. Write `.env` template to `${CLAUDE_PLUGIN_DATA}/.env`.
+Write `config.json` to `${CLAUDE_PLUGIN_DATA}/config.json` using Bash heredoc (env vars must be shell-expanded). Include `use_mcp` (true/false), `involvement_level`, `autonomy_mode`, and `discovery_mode` in the config.
 
 **Never store API keys in config.json — keys go in .env only.**
+
+Write `.env` to `${CLAUDE_PLUGIN_DATA}/.env` with this content:
+
+```
+# Alpaca API Credentials
+# Get your free keys at: https://app.alpaca.markets/
+# Both values are required — find them under API Keys in your Alpaca dashboard
+ALPACA_API_KEY=
+ALPACA_SECRET_KEY=
+
+# Paper trading mode (true = simulated, false = real money)
+ALPACA_PAPER=true
+```
+
+Set `ALPACA_PAPER` based on the user's paper/live choice from Step 4.
+
+After writing, tell the user:
+"Created `.env` file at `${CLAUDE_PLUGIN_DATA}/.env`. **Before running the bot, add your Alpaca credentials:**
+1. Go to https://app.alpaca.markets/ and sign up (free)
+2. Navigate to API Keys in your dashboard
+3. Copy your **API Key ID** and **Secret Key**
+4. Paste them into the `.env` file
+
+Both the API key and secret key are required — the bot and MCP server won't work without them."
 
 Display summary table including MCP status and involvement mode, then set expectations:
 
