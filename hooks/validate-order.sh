@@ -2,7 +2,22 @@
 # PreToolUse hook — intercepts Bash calls that invoke order submission scripts.
 # Reads tool_input JSON from stdin. Denies if circuit breaker flag exists.
 # IMPORTANT: All debug output to stderr (>&2). Only JSON decisions to stdout.
+#
+# Handles two execution contexts:
+#   Plugin mode:  CLAUDE_PLUGIN_ROOT and CLAUDE_PLUGIN_DATA are set by Claude Code
+#   Dev mode:     Both env vars are unset; fall back to script's own parent directory
 set -euo pipefail
+
+# Resolve project root: use CLAUDE_PLUGIN_ROOT when available (plugin mode),
+# otherwise derive from the script's location (dev mode — script lives in hooks/).
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+
+# Resolve data directory: use CLAUDE_PLUGIN_DATA when available (plugin mode),
+# otherwise keep data local to the project (dev mode).
+DATA_DIR="${CLAUDE_PLUGIN_DATA:-${PLUGIN_ROOT}/.plugin-data}"
+
+# Circuit breaker flag path (written by risk_manager.py)
+CB_FLAG="${DATA_DIR}/circuit_breaker.flag"
 
 INPUT=$(cat /dev/stdin)
 COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
@@ -15,7 +30,6 @@ fi
 echo "Intercepted order command: $COMMAND" >&2
 
 # Check circuit breaker flag file (written by risk_manager.py)
-CB_FLAG="${CLAUDE_PLUGIN_DATA:-/tmp}/circuit_breaker.flag"
 if [ -f "$CB_FLAG" ]; then
   jq -n '{
     "hookSpecificOutput": {
@@ -28,7 +42,6 @@ if [ -f "$CB_FLAG" ]; then
 fi
 
 # Check PDT trades count — try SQLite first (Phase 3+), fall back to JSON
-DATA_DIR="${CLAUDE_PLUGIN_DATA:-/tmp}"
 DB_FILE="${DATA_DIR}/trading.db"
 PDT_FILE="${DATA_DIR}/pdt_trades.json"
 CUTOFF=$(date -d "7 days ago" +%Y-%m-%d 2>/dev/null || date -v-7d +%Y-%m-%d 2>/dev/null || echo "")
