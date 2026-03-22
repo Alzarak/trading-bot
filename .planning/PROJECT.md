@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A Claude Code plugin that automates stock day trading on US markets. It provides an interactive setup command that adapts to any user — from complete beginners to expert traders — then generates and runs autonomous trading infrastructure using the Alpaca API. The plugin leverages the full Claude Code plugin system: agents, skills, commands, reference files, and hooks.
+A Claude Code plugin that automates stock day trading on US markets. Users run `/initialize` to configure trading preferences (adapts to beginner through expert), `/build` to generate standalone Python trading scripts, and `/run` to start an autonomous trading loop. The bot scans markets, computes technical indicators, applies configurable strategies, and executes trades via the Alpaca API — with Claude as an optional strategy-level analyst and a full risk management safety layer.
 
 ## Core Value
 
@@ -12,21 +12,24 @@ After initial setup, the bot trades autonomously without human intervention — 
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Interactive `/initialize` command with beginner/intermediate/expert adaptation — v1.0
+- ✓ Autonomous risk mode where Claude analyzes trades and recommends actions — v1.0
+- ✓ `/build` command generating standalone Python scripts from config — v1.0
+- ✓ `/run` command starting the autonomous trading loop (agent + standalone modes) — v1.0
+- ✓ Alpaca API integration for paper and live trading — v1.0
+- ✓ Full plugin structure: 3 agents, 1 skill, 3 commands, 2 hooks, 3 reference files — v1.0
+- ✓ Beginner-friendly (conservative defaults, guided) and expert (full control) modes — v1.0
+- ✓ Loop-based autonomous execution via APScheduler with market hours enforcement — v1.0
+- ✓ Standalone Python scripts runnable on VPS/server with cron/systemd — v1.0
+- ✓ Publishable to Claude Code plugin marketplace — v1.0
+- ✓ Circuit breaker, PDT tracking, position sizing, ghost position prevention — v1.0
+- ✓ 4 strategies: momentum, mean reversion, breakout, VWAP — v1.0
+- ✓ SQLite state persistence with crash recovery — v1.0
+- ✓ End-of-day reports and Slack webhook notifications — v1.0
 
 ### Active
 
-- [ ] Interactive `/initialize` command that walks users through trading preferences (risk tolerance, budget, paper vs live, autonomy level, strategies, market hours)
-- [ ] Autonomous risk mode where Claude analyzes each trade opportunity and decides aggression based on context
-- [ ] `/build` command that generates all Python scripts, configs, and infrastructure from initialize context
-- [ ] `/run` command that starts the autonomous trading loop
-- [ ] Alpaca API integration for both paper trading and live trading
-- [ ] Alpaca MCP server integration for real-time market data access within Claude
-- [ ] Full plugin structure: agents (for market analysis, trade execution, risk management), skills, commands, reference files, hooks
-- [ ] Configurable for beginners (guided, conservative defaults) and experts (direct, full control)
-- [ ] Loop-based autonomous execution after initial setup — no user interaction needed
-- [ ] Option to run within Claude Code or as standalone Python scripts on a server/cron
-- [ ] Publishable to the Claude Code plugin marketplace (~/projects)
+(None — next milestone TBD)
 
 ### Out of Scope
 
@@ -35,15 +38,20 @@ After initial setup, the bot trades autonomously without human intervention — 
 - Mobile app or web dashboard — CLI/Claude Code only
 - Custom broker integrations — Alpaca only for v1
 - Backtesting engine — defer to v2
+- Alpaca MCP server — dropped in v1.0 (SDK-only approach chosen)
 
 ## Context
 
-- User is new to trading; the plugin must handle all domain knowledge
-- Other users (potentially expert traders) will install this from the marketplace
-- Alpaca chosen for: free API, built-in paper trading, community MCP server, good documentation
-- Plugin lives in its own repo under ~/projects, publishable to existing marketplace repo
-- All user-specific preferences must flow through /initialize — nothing hardcoded
-- The plugin-creator skill should be used for proper plugin structure
+Shipped v1.0 with 4,512 LOC Python across 15 modules + 312 automated tests.
+Tech stack: alpaca-py 0.43.2, pandas-ta 0.4.71b0, APScheduler 3.x, SQLite, loguru, pydantic-settings.
+Plugin structure: 3 commands, 3 agents, 1 skill, 2 hooks (SessionStart + PreToolUse), 3 reference files.
+All deployed in a single session on 2026-03-22.
+
+Known tech debt:
+- `/initialize` doesn't prompt for Slack webhook URL (notifications require manual config edit)
+- `autonomy_mode` config field is informational — no runtime branching
+- Email notification channel is a stub
+- marketplace.json has placeholder GitHub repository URL
 
 ## Constraints
 
@@ -57,27 +65,14 @@ After initial setup, the bot trades autonomously without human intervention — 
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Alpaca API | Free, paper trading built-in, MCP server available, well-documented | — Pending |
-| All preferences via /initialize | Plugin must work for beginners and experts — no hardcoded assumptions | — Pending |
-| Python for trading logic | Industry standard for financial automation, rich library ecosystem | — Pending |
-| Plugin marketplace distribution | User wants it publishable and usable by others | — Pending |
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd:transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd:complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+| Alpaca API | Free, paper trading built-in, well-documented | ✓ Good — clean SDK, paper mode worked seamlessly |
+| Drop MCP server (ALP-04) | SDK-only simplifies stack, Claude reads script output instead | ✓ Good — fewer moving parts, no MCP dependency |
+| All preferences via /initialize | Plugin works for beginners and experts — no hardcoded assumptions | ✓ Good — 3-level adaptation works well |
+| Python for trading logic | Industry standard for financial automation, rich library ecosystem | ✓ Good — pandas-ta, alpaca-py, APScheduler all solid |
+| Plugin marketplace distribution | Publishable and usable by others | ✓ Good — valid manifest and marketplace.json |
+| pandas-ta over TA-Lib | No C compiler needed for plugin users | ✓ Good — pip-installable, all 6 indicators work |
+| Claude as analyst only | Safety — Claude never submits orders directly | ✓ Good — structural safety via type system |
+| SQLite for state | Lightweight, no infrastructure, crash recovery via WAL | ✓ Good — reconciliation works cleanly |
 
 ---
-*Last updated: 2026-03-21 after initialization*
+*Last updated: 2026-03-22 after v1.0 milestone*
