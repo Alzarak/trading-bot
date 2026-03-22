@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-03-22T00:47:03.390Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-03-22T01:20:02.231Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 10
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** After initial setup, the bot trades autonomously without human intervention — scanning markets, making decisions (using Claude for analysis), and executing trades on a loop.
-**Current focus:** Phase 02 — risk-management
+**Current focus:** Phase 03 — core-trading-loop
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (core-trading-loop) — EXECUTING
+Plan: 2 of 5
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: Not started
 | Phase 01 P03 | 7 | 1 tasks | 2 files |
 | Phase 02-risk-management P01 | 4 | 2 tasks | 4 files |
 | Phase 02-risk-management P02 | 3 | 2 tasks | 4 files |
+| Phase 03-core-trading-loop P03 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Recent decisions affecting current work:
 - [Phase 02-risk-management]: Hook uses JSON permissionDecision deny format — not exit code 2 — per Claude Code hooks spec
 - [Phase 02-risk-management]: Bash matcher on PreToolUse gates all Bash calls; hook filters internally by command pattern via grep
 - [Phase 02-risk-management]: PDT check in hook is a lightweight redundant safety layer; Python RiskManager remains primary PDT enforcer
+- [Phase 03-core-trading-loop]: SQLite WAL mode for StateStore — survives power loss, allows concurrent reads without lock contention
+- [Phase 03-core-trading-loop]: INSERT OR REPLACE for positions: Alpaca avg_entry_price is source of truth on crash recovery reconciliation
+- [Phase 03-core-trading-loop]: pdt_trades.json.migrated rename guard: prevents double-migration across bot restarts
 
 ### Pending Todos
 
@@ -92,6 +96,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T00:44:11.164Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-03-22T01:20:02.221Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None

@@ -43,7 +43,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **POS-01**: Bot sizes positions as percentage of account equity (configurable)
 - [x] **POS-02**: Bot enforces maximum position count limit
 - [ ] **POS-03**: Bot closes or logs all open positions on graceful shutdown (SIGINT/SIGTERM)
-- [ ] **POS-04**: Bot reconciles local state against Alpaca's actual positions on startup (crash recovery)
+- [x] **POS-04**: Bot reconciles local state against Alpaca's actual positions on startup (crash recovery)
 
 ### Risk Management
 
@@ -99,8 +99,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### State Management
 
-- [ ] **STATE-01**: Bot persists trading state to SQLite database (positions, orders, trade history)
-- [ ] **STATE-02**: Bot recovers from crashes by reconciling SQLite state against Alpaca positions
+- [x] **STATE-01**: Bot persists trading state to SQLite database (positions, orders, trade history)
+- [x] **STATE-02**: Bot recovers from crashes by reconciling SQLite state against Alpaca positions
 - [x] **STATE-03**: Bot maintains configuration in JSON file editable without code changes
 
 ### Distribution
@@ -172,7 +172,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POS-01 | Phase 2 | Complete |
 | POS-02 | Phase 2 | Complete |
 | POS-03 | Phase 3 | Pending |
-| POS-04 | Phase 3 | Pending |
+| POS-04 | Phase 3 | Complete |
 | RISK-01 | Phase 2 | Complete |
 | RISK-02 | Phase 2 | Complete |
 | RISK-03 | Phase 2 | Complete |
@@ -207,8 +207,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | OBS-03 | Phase 6 | Pending |
 | OBS-04 | Phase 6 | Pending |
 | OBS-05 | Phase 6 | Pending |
-| STATE-01 | Phase 3 | Pending |
-| STATE-02 | Phase 3 | Pending |
+| STATE-01 | Phase 3 | Complete |
+| STATE-02 | Phase 3 | Complete |
 | STATE-03 | Phase 1 | Complete |
 | DIST-01 | Phase 6 | Pending |
 | DIST-02 | Phase 6 | Pending |
