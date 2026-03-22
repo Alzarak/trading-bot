@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Plugin Foundation** - Installable plugin structure with `/initialize` wizard and config schema (completed 2026-03-22)
 - [x] **Phase 2: Risk Management** - Circuit breakers, position sizing, PDT guard, and safety hook wired before any order code exists (completed 2026-03-22)
 - [x] **Phase 3: Core Trading Loop** - Deterministic market scan → signal → order → track pipeline running in paper mode (completed 2026-03-22)
-- [ ] **Phase 4: Build Command** - `/build` generates tailored Python scripts with secure secret management
+- [x] **Phase 4: Build Command** - `/build` generates tailored Python scripts with secure secret management (completed 2026-03-22)
 - [ ] **Phase 5: Run Command and Claude Analysis** - `/run` orchestrates multi-agent execution; Claude added as strategy-level reasoning layer
 - [ ] **Phase 6: Distribution and Observability** - Marketplace publishing, standalone mode, end-of-day reports, and notifications
 
@@ -87,7 +87,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Build generator module and /build slash command
-- [ ] 04-02-PLAN.md — Secret management, .gitignore, standalone runner, deployment instructions
+- [x] 04-02-PLAN.md — Secret management, .gitignore, standalone runner, deployment instructions
 
 ### Phase 5: Run Command and Claude Analysis
 **Goal**: Users can run `/run` to start the autonomous trading loop via Claude Code agents, with Claude acting as a strategy-level reasoning layer that analyzes trade opportunities and returns structured JSON recommendations — never submitting orders directly
@@ -130,6 +130,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 1. Plugin Foundation | 3/3 | Complete   | 2026-03-22 |
 | 2. Risk Management | 2/2 | Complete   | 2026-03-22 |
 | 3. Core Trading Loop | 5/5 | Complete   | 2026-03-22 |
-| 4. Build Command | 1/2 | In Progress|  |
+| 4. Build Command | 2/2 | Complete   | 2026-03-22 |
 | 5. Run Command and Claude Analysis | 0/2 | Not started | - |
 | 6. Distribution and Observability | 0/2 | Not started | - |

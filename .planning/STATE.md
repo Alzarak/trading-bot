@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-03-22T01:52:38.739Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-22T01:56:50.908Z"
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -57,6 +57,7 @@ Plan: 2 of 2
 | Phase 03-core-trading-loop P04 | 6 | 2 tasks | 7 files |
 | Phase 03 P05 | 5 | 3 tasks | 5 files |
 | Phase 04-build-command P01 | 3 | 2 tasks | 3 files |
+| Phase 04-build-command P02 | 15 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,9 @@ Recent decisions affecting current work:
 - [Phase 04-build-command]: Simple str.replace('from scripts.', 'from ') for import rewriting — safe because all source files use consistent pattern
 - [Phase 04-build-command]: Generated strategies/__init__.py built dynamically (not copied) to filter STRATEGY_REGISTRY to only selected strategies
 - [Phase 04-build-command]: Generated bot.py load_config() stripped of CLAUDE_PLUGIN_DATA fallback — standalone version reads from cwd only
+- [Phase 04-build-command]: .env.template always writes ALPACA_PAPER=true regardless of config — user must explicitly set false for live trading
+- [Phase 04-build-command]: requirements.txt for standalone excludes rich — only needed for plugin wizard UI, not the autonomous bot
+- [Phase 04-build-command]: run.sh uses shell source .env — no extra dependency, works in any POSIX environment
 
 ### Pending Todos
 
@@ -117,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T01:52:38.729Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-03-22T01:56:50.898Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None

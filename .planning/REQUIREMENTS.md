@@ -16,8 +16,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **CMD-05**: Initialize wizard outputs a complete config file that all other commands consume
 - [x] **CMD-06**: User can run `/build` to generate all Python trading scripts from initialize config
 - [x] **CMD-07**: Build command generates tailored scripts based on selected strategies and preferences
-- [ ] **CMD-08**: Build command enforces `.env` pattern for API keys — never writes literal secrets to generated files
-- [ ] **CMD-09**: Build command auto-creates `.gitignore` with `.env` and sensitive files excluded
+- [x] **CMD-08**: Build command enforces `.env` pattern for API keys — never writes literal secrets to generated files
+- [x] **CMD-09**: Build command auto-creates `.gitignore` with `.env` and sensitive files excluded
 - [ ] **CMD-10**: User can run `/run` to start the autonomous trading loop
 - [ ] **CMD-11**: Run command supports both Claude Code agent mode and standalone Python execution
 - [x] **CMD-12**: User can select from momentum, mean reversion, breakout, and VWAP strategies during initialize
@@ -108,8 +108,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **DIST-01**: Plugin is installable via `claude plugin install` from marketplace
 - [ ] **DIST-02**: Plugin includes `plugin.json` manifest with version, description, dependencies
 - [ ] **DIST-03**: Plugin is publishable to Claude Code plugin marketplace via GitHub
-- [ ] **DIST-04**: Generated Python scripts can run standalone on a VPS/server without Claude Code
-- [ ] **DIST-05**: Standalone mode includes cron/systemd setup instructions or scripts
+- [x] **DIST-04**: Generated Python scripts can run standalone on a VPS/server without Claude Code
+- [x] **DIST-05**: Standalone mode includes cron/systemd setup instructions or scripts
 
 ## v2 Requirements
 
@@ -154,8 +154,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMD-05 | Phase 1 | Complete |
 | CMD-06 | Phase 4 | Complete |
 | CMD-07 | Phase 4 | Complete |
-| CMD-08 | Phase 4 | Pending |
-| CMD-09 | Phase 4 | Pending |
+| CMD-08 | Phase 4 | Complete |
+| CMD-09 | Phase 4 | Complete |
 | CMD-10 | Phase 5 | Pending |
 | CMD-11 | Phase 5 | Pending |
 | CMD-12 | Phase 1 | Complete |
@@ -213,8 +213,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DIST-01 | Phase 6 | Pending |
 | DIST-02 | Phase 6 | Pending |
 | DIST-03 | Phase 6 | Pending |
-| DIST-04 | Phase 4 | Pending |
-| DIST-05 | Phase 4 | Pending |
+| DIST-04 | Phase 4 | Complete |
+| DIST-05 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 68 total
