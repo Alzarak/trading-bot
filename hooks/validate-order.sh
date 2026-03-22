@@ -6,7 +6,7 @@
 # Handles two execution contexts:
 #   Plugin mode:  CLAUDE_PLUGIN_ROOT and CLAUDE_PLUGIN_DATA are set by Claude Code
 #   Dev mode:     Both env vars are unset; fall back to script's own parent directory
-set -euo pipefail
+set -uo pipefail
 
 # Resolve project root: use CLAUDE_PLUGIN_ROOT when available (plugin mode),
 # otherwise derive from the script's location (dev mode — script lives in hooks/).
@@ -19,8 +19,13 @@ DATA_DIR="${CLAUDE_PLUGIN_DATA:-${PLUGIN_ROOT}/.plugin-data}"
 # Circuit breaker flag path (written by risk_manager.py)
 CB_FLAG="${DATA_DIR}/circuit_breaker.flag"
 
-INPUT=$(cat /dev/stdin)
-COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty')
+INPUT=$(cat /dev/stdin 2>/dev/null) || true
+COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null) || true
+
+# If we couldn't parse a command, this isn't something we need to gate
+if [ -z "$COMMAND" ]; then
+  exit 0
+fi
 
 # Only gate commands that invoke our trading scripts with order patterns
 if ! echo "$COMMAND" | grep -qE "(submit_order|place_order|execute_trade|bot\.py.*--(order|trade|submit))"; then
