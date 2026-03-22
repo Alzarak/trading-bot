@@ -25,13 +25,13 @@ A Claude Code plugin that automates stock day trading on US markets via the Alpa
 First, add the marketplace that hosts this plugin:
 
 ```
-/plugin marketplace add <owner>/<repo>
+/plugin marketplace add Alzarak/claude-marketplace
 ```
 
 Then install the plugin:
 
 ```
-/plugin install trading-bot@<marketplace-name>
+/plugin install trading-bot@Alzarak-claude-marketplace
 ```
 
 ### From a local directory (development)
