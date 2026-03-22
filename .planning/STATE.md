@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-03-22T01:20:02.231Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-22T01:21:04.236Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 10
-  completed_plans: 6
+  completed_plans: 8
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 03 (core-trading-loop) — EXECUTING
-Plan: 2 of 5
+Plan: 4 of 5
 
 ## Performance Metrics
 
@@ -52,6 +52,8 @@ Plan: 2 of 5
 | Phase 02-risk-management P01 | 4 | 2 tasks | 4 files |
 | Phase 02-risk-management P02 | 3 | 2 tasks | 4 files |
 | Phase 03-core-trading-loop P03 | 4 | 2 tasks | 2 files |
+| Phase 03 P02 | 4 | 2 tasks | 5 files |
+| Phase 03 P01 | 292 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -83,6 +85,13 @@ Recent decisions affecting current work:
 - [Phase 03-core-trading-loop]: SQLite WAL mode for StateStore — survives power loss, allows concurrent reads without lock contention
 - [Phase 03-core-trading-loop]: INSERT OR REPLACE for positions: Alpaca avg_entry_price is source of truth on crash recovery reconciliation
 - [Phase 03-core-trading-loop]: pdt_trades.json.migrated rename guard: prevents double-migration across bot restarts
+- [Phase 03]: Conditional alpaca-py import in order_executor.py enables testing without SDK
+- [Phase 03]: pandas_ta must be imported explicitly (not just alpaca-py) to register df.ta accessor on DataFrames
+- [Phase 03]: pandas-ta 0.4.71b0 BBands columns use BBL_{period}_{std}_{std} format — std appears twice, not once
+- [Phase 03]: get_indicator_columns() is single source of truth for column names — ATRr_{period} not ATR_{period}
+- [Phase 03]: BUY signals use bracket orders (atomic stop+tp), SELL signals use market orders for speed
+- [Phase 03]: pytest.ini with pythonpath=. added — fixes scripts module resolution for all tests
+- [Phase 03]: execute_signal() gates 4 risk checks before building any order object — circuit_breaker, position_count, pdt, sizing
 
 ### Pending Todos
 
@@ -96,6 +105,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-22T01:20:02.221Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-03-22T01:21:04.226Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
