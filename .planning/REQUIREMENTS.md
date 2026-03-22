@@ -93,9 +93,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **OBS-01**: Bot logs every trade to file (timestamp, ticker, action, price, quantity, P&L)
 - [x] **OBS-02**: Bot tracks portfolio P&L (daily and total return) using Alpaca account endpoint
-- [ ] **OBS-03**: Bot generates end-of-day summary report (P&L, trades taken, win rate, biggest winner/loser)
-- [ ] **OBS-04**: Bot sends notifications on key events (circuit breaker fired, daily summary, large win/loss)
-- [ ] **OBS-05**: Notification channels configurable (Slack webhook, email)
+- [x] **OBS-03**: Bot generates end-of-day summary report (P&L, trades taken, win rate, biggest winner/loser)
+- [x] **OBS-04**: Bot sends notifications on key events (circuit breaker fired, daily summary, large win/loss)
+- [x] **OBS-05**: Notification channels configurable (Slack webhook, email)
 
 ### State Management
 
@@ -105,9 +105,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Distribution
 
-- [ ] **DIST-01**: Plugin is installable via `claude plugin install` from marketplace
-- [ ] **DIST-02**: Plugin includes `plugin.json` manifest with version, description, dependencies
-- [ ] **DIST-03**: Plugin is publishable to Claude Code plugin marketplace via GitHub
+- [x] **DIST-01**: Plugin is installable via `claude plugin install` from marketplace
+- [x] **DIST-02**: Plugin includes `plugin.json` manifest with version, description, dependencies
+- [x] **DIST-03**: Plugin is publishable to Claude Code plugin marketplace via GitHub
 - [x] **DIST-04**: Generated Python scripts can run standalone on a VPS/server without Claude Code
 - [x] **DIST-05**: Standalone mode includes cron/systemd setup instructions or scripts
 
@@ -204,15 +204,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PLUG-08 | Phase 1 | Complete |
 | OBS-01 | Phase 3 | Complete |
 | OBS-02 | Phase 3 | Complete |
-| OBS-03 | Phase 6 | Pending |
-| OBS-04 | Phase 6 | Pending |
-| OBS-05 | Phase 6 | Pending |
+| OBS-03 | Phase 6 | Complete |
+| OBS-04 | Phase 6 | Complete |
+| OBS-05 | Phase 6 | Complete |
 | STATE-01 | Phase 3 | Complete |
 | STATE-02 | Phase 3 | Complete |
 | STATE-03 | Phase 1 | Complete |
-| DIST-01 | Phase 6 | Pending |
-| DIST-02 | Phase 6 | Pending |
-| DIST-03 | Phase 6 | Pending |
+| DIST-01 | Phase 6 | Complete |
+| DIST-02 | Phase 6 | Complete |
+| DIST-03 | Phase 6 | Complete |
 | DIST-04 | Phase 4 | Complete |
 | DIST-05 | Phase 4 | Complete |
 
