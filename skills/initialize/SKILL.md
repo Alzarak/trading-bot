@@ -56,16 +56,16 @@ Store as `risk_tolerance`.
 
 ## Step 4 — Budget and Trading Mode
 
-Ask how much starting capital (in USD) to allocate. Present these options:
+Ask how much starting capital (in USD) the bot should trade with. Present these options:
 
-1. $100 — Micro account — great for absolute beginners testing the waters
-2. $500 — Small account — enough to practice real strategies
-3. $1,000 — Starter account — good for learning with real-feeling trades
-4. $5,000 — Medium account — more flexibility for diversification
-5. $25,000 — Above PDT threshold — unlimited day trades
-6. Custom amount (minimum $50)
+1. $10 — Just testing — see the bot in action with minimal risk
+2. $25 — Starter — enough for the bot to make a few real trades
+3. $100 — Standard — gives the bot room to diversify across a few stocks
+4. $500 — Comfortable — more flexibility for the bot's strategies
+5. $1,000+ — Serious — the bot can fully utilize all strategies
+6. Custom amount (minimum $1)
 
-Store as `budget_usd` (positive number, minimum 50).
+Store as `budget_usd` (positive number, minimum 1).
 
 **Beginner:** Auto-set `paper_trading = true`. Inform the user paper mode is active.
 
