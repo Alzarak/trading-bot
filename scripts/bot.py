@@ -24,6 +24,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from loguru import logger
 
+from scripts.audit_logger import AuditLogger
+from scripts.claude_analyzer import ClaudeAnalyzer
 from scripts.market_scanner import MarketScanner
 from scripts.order_executor import OrderExecutor
 from scripts.portfolio_tracker import PortfolioTracker
@@ -264,6 +266,143 @@ def scan_and_trade(
 
 
 # ------------------------------------------------------------------
+# Claude analysis pipeline helpers (agent mode)
+# ------------------------------------------------------------------
+
+def get_analysis_context(scanner: MarketScanner, config: dict) -> dict:
+    """Generate analysis context for all watchlist symbols.
+
+    Builds a ClaudeAnalyzer prompt for each symbol x strategy combination.
+    Used by the /run command agent mode to prepare analysis inputs for Claude.
+    Claude receives these prompts, responds with JSON recommendations, and
+    the responses are processed by execute_claude_recommendation().
+
+    This function does NOT call Claude — it only prepares prompts.
+
+    Args:
+        scanner: MarketScanner instance for fetching bars and indicators.
+        config: Trading configuration dict with watchlist and strategies.
+
+    Returns:
+        Dict of {"symbol_strategy": {"symbol", "strategy", "prompt",
+        "current_price"}} for each valid symbol x strategy combination.
+        Symbols with empty DataFrames are skipped.
+    """
+    analyzer = ClaudeAnalyzer(config)
+    watchlist = config.get("watchlist", [])
+    context: dict = {}
+
+    for symbol in watchlist:
+        try:
+            df = scanner.scan(symbol)
+            if df.empty:
+                logger.warning("get_analysis_context: no data for {} — skipping", symbol)
+                continue
+
+            current_price = float(df.iloc[-1]["close"])
+
+            for strategy_config in config.get("strategies", []):
+                strategy_name = strategy_config.get("name", "unknown")
+                prompt = analyzer.build_analysis_prompt(symbol, df, strategy_name)
+                key = f"{symbol}_{strategy_name}"
+                context[key] = {
+                    "symbol": symbol,
+                    "strategy": strategy_name,
+                    "prompt": prompt,
+                    "current_price": current_price,
+                }
+                logger.debug(
+                    "get_analysis_context: prepared prompt for {} / {}",
+                    symbol,
+                    strategy_name,
+                )
+        except Exception as exc:
+            logger.error(
+                "get_analysis_context: error preparing context for {}: {}",
+                symbol,
+                exc,
+            )
+
+    logger.info(
+        "get_analysis_context: {} prompts prepared for {} symbols",
+        len(context),
+        len(watchlist),
+    )
+    return context
+
+
+def execute_claude_recommendation(
+    recommendation_json: str,
+    executor: OrderExecutor,
+    tracker: PortfolioTracker,
+    state_store: StateStore,
+    audit_logger: AuditLogger,
+    analyzer: ClaudeAnalyzer,
+) -> dict:
+    """Parse a Claude recommendation JSON and execute through the risk manager.
+
+    Implements the complete Claude analysis pipeline:
+      1. Parse Claude's JSON response into ClaudeRecommendation objects
+      2. Log each recommendation to the audit trail
+      3. Convert to Signal via to_signal()
+      4. Route through OrderExecutor.execute_signal() (all 4 risk checks)
+      5. Log execution result (submitted/blocked/failed) to audit trail
+
+    Claude never submits orders directly. All recommendations pass through
+    the deterministic Python risk manager before any Alpaca order is placed.
+
+    Args:
+        recommendation_json: Raw Claude response text containing JSON recommendation.
+        executor: OrderExecutor instance with risk manager wired in.
+        tracker: PortfolioTracker for trade logging.
+        state_store: StateStore for position persistence.
+        audit_logger: AuditLogger for NDJSON decision audit trail.
+        analyzer: ClaudeAnalyzer instance for parsing the response.
+
+    Returns:
+        Dict with "results" key containing a list of per-recommendation outcome
+        dicts: {"symbol", "action", "status"}.
+    """
+    recs = analyzer.parse_response(recommendation_json)
+    if not recs:
+        logger.warning("execute_claude_recommendation: no valid recommendations parsed")
+        return {"results": []}
+
+    results = []
+    for rec in recs:
+        # Always log the recommendation before attempting execution
+        audit_logger.log_recommendation(rec)
+
+        if rec.action in ("BUY", "SELL"):
+            signal = rec.to_signal()
+            # Use stop_price as proxy for current_price since agent mode
+            # should supply accurate price via context from get_analysis_context
+            order = executor.execute_signal(signal, rec.stop_price)
+            status = "submitted" if order is not None else "blocked"
+            order_id = str(getattr(order, "id", None)) if order else None
+            audit_logger.log_execution_result(rec, status, order_id)
+            results.append(
+                {"symbol": rec.symbol, "action": rec.action, "status": status}
+            )
+            logger.info(
+                "execute_claude_recommendation: {} {} — {}",
+                rec.action,
+                rec.symbol,
+                status,
+            )
+        else:
+            # HOLD — log it but do not submit any order
+            audit_logger.log_execution_result(rec, "hold", reason="HOLD signal — no order")
+            results.append({"symbol": rec.symbol, "action": "HOLD", "status": "hold"})
+            logger.debug(
+                "execute_claude_recommendation: HOLD {} — no order submitted",
+                rec.symbol,
+            )
+
+    return {"results": results}
+
+
+# ------------------------------------------------------------------
 # Graceful shutdown
 # ------------------------------------------------------------------
 
@@ -339,6 +478,10 @@ def main() -> None:
     db_path = data_dir / "trading.db"
     state_store = StateStore(db_path)
     logger.info("StateStore initialized at {}", db_path)
+
+    # 3b. Initialize AuditLogger for Claude analysis pipeline
+    audit_logger = AuditLogger(data_dir)
+    logger.info("AuditLogger initialized at {}", audit_logger.audit_file)
 
     # 4. Crash recovery
     reconcile_result = state_store.reconcile_positions(trading_client)

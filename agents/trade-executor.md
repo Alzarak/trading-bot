@@ -88,6 +88,62 @@ Return a structured execution summary:
 | BUY | Bracket (limit + stop + take-profit) | Atomically protects every entry |
 | SELL | Market | Immediate exit — price certainty less important than speed |
 
+## Claude Analysis Pipeline
+
+In `/run` agent mode, Claude acts as an inline market analyst. The pipeline:
+
+```
+ClaudeAnalyzer.build_analysis_prompt(symbol, df, strategy)
+  → Claude analyzes indicators and returns ClaudeRecommendation JSON
+  → AuditLogger.log_recommendation(rec)        ← logged BEFORE execution
+  → ClaudeRecommendation.to_signal()           ← converts to Signal
+  → OrderExecutor.execute_signal(signal, price) ← 4 risk checks run here
+  → AuditLogger.log_execution_result(rec, status, order_id)  ← logged AFTER
+```
+
+**Key invariant:** Claude never submits orders. Every recommendation routes
+through the deterministic Python `RiskManager` before any Alpaca order is placed.
+
+### ClaudeRecommendation Schema
+
+```json
+{
+  "symbol": "AAPL",
+  "action": "BUY" | "SELL" | "HOLD",
+  "confidence": 0.82,
+  "reasoning": "RSI below 30, MACD histogram turning positive — oversold momentum reversal",
+  "strategy": "momentum",
+  "atr": 1.47,
+  "stop_price": 147.06
+}
+```
+
+All fields are required. `confidence` must be a float between 0.0 and 1.0.
+Recommendations below the configured confidence threshold (default 0.6) are
+filtered out by `ClaudeAnalyzer.parse_response()` before reaching this agent.
+
+### Audit Trail
+
+Every decision is auditable. After each trading session, inspect:
+
+```
+{CLAUDE_PLUGIN_DATA}/audit/claude_decisions.ndjson
+```
+
+Each line is a JSON object with either `"type": "recommendation"` or
+`"type": "execution"`. Filter by `session_id` to review a specific run:
+
+```bash
+grep '"type": "recommendation"' claude_decisions.ndjson | jq .
+```
+
+### bot.py Entry Points for Agent Mode
+
+| Function | Purpose |
+|----------|---------|
+| `get_analysis_context(scanner, config)` | Prepares analysis prompts for all watchlist symbols |
+| `execute_claude_recommendation(json, executor, tracker, state_store, audit_logger, analyzer)` | Parses Claude response and executes through risk manager |
+
 ## Logging Reference
 
 Use loguru for all logging. Every execution event must include:
