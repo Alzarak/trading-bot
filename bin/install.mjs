@@ -348,9 +348,9 @@ ALPACA_PAPER=true
   console.log("");
   console.log("\x1b[1m  Installation complete!\x1b[0m");
   console.log("");
-  console.log("  Next step:");
-  console.log("  1. Start Claude Code in this project directory");
-  console.log("  2. Run \x1b[1m/trading-bot:initialize\x1b[0m to configure your trading preferences");
+  console.log("  To configure your trading preferences, run:");
+  console.log("");
+  console.log("    \x1b[1mclaude /trading-bot:initialize\x1b[0m");
   console.log("");
 
   rl.close();
