@@ -210,6 +210,65 @@ def scan_and_trade(
         return
 
     global _discovered_watchlist, _discovery_timestamp
+
+    # --- Check budget before full scan ---
+    budget = float(config.get("budget_usd", 100))
+    min_trade_value = 0.50  # minimum useful trade
+    try:
+        positions = scanner.trading_client.get_all_positions()
+        total_exposure = sum(abs(float(p.market_value)) for p in positions)
+        remaining_budget = budget - total_exposure
+
+        if remaining_budget < min_trade_value and positions:
+            logger.info(
+                "scan_and_trade: budget exhausted (${:.2f} remaining of ${:.2f}). "
+                "Monitoring {} open positions for exit signals only.",
+                remaining_budget, budget, len(positions),
+            )
+            # Only scan held positions for SELL signals
+            held_symbols = [p.symbol for p in positions]
+            for pos in positions:
+                logger.info(
+                    "  Position: {} | {} shares @ ${} | P&L: ${}",
+                    pos.symbol, pos.qty, pos.avg_entry_price, pos.unrealized_pl,
+                )
+            # Scan held positions for exit signals
+            for symbol in held_symbols:
+                try:
+                    df = scanner.scan(symbol)
+                    if df.empty:
+                        continue
+                    current_price = float(df.iloc[-1]["close"])
+                    for strategy_config in strategies:
+                        strategy_name = strategy_config.get("name")
+                        if strategy_name not in STRATEGY_REGISTRY:
+                            continue
+                        strategy = STRATEGY_REGISTRY[strategy_name]()
+                        params = strategy_config.get("params", {})
+                        signal = strategy.generate_signal(df, symbol, params)
+                        threshold = _get_confidence_threshold(config)
+                        if signal.action == "SELL" and signal.confidence >= threshold:
+                            logger.info(
+                                "SELL signal for held position: {} (confidence={:.2f})",
+                                symbol, signal.confidence,
+                            )
+                            order = executor.execute_signal(signal, current_price)
+                            if order is not None:
+                                state_store.mark_position_closed(symbol)
+                                tracker.log_trade(
+                                    symbol=symbol, action="SELL",
+                                    price=current_price,
+                                    qty=int(getattr(order, "qty", 0)),
+                                    strategy=signal.strategy, order_type="market",
+                                )
+                except Exception as exc:
+                    logger.error("Error scanning held position {}: {}", symbol, exc)
+            return
+
+    except Exception as exc:
+        logger.debug("scan_and_trade: exposure check failed: {} — continuing with full scan", exc)
+
+    # --- Full scan cycle ---
     watchlist = config.get("watchlist", [])
     if not watchlist:
         # Auto-discover affordable stocks, cached hourly
@@ -218,6 +277,17 @@ def scan_and_trade(
             _discovery_timestamp = time.time()
             logger.info("Auto-discovered {} symbols: {}", len(_discovered_watchlist), _discovered_watchlist)
         watchlist = _discovered_watchlist
+
+    # Always include held positions in scan so SELL signals fire
+    try:
+        positions = scanner.trading_client.get_all_positions()
+        held_symbols = [p.symbol for p in positions]
+        for sym in held_symbols:
+            if sym not in watchlist:
+                watchlist.append(sym)
+    except Exception:
+        pass  # non-critical — watchlist still works without held positions
+
     logger.info("scan_and_trade: scanning {} symbols", len(watchlist))
 
     for symbol in watchlist:
