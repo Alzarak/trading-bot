@@ -1,31 +1,22 @@
 #!/usr/bin/env bash
 # SessionStart hook: Install Python dependencies if requirements.txt changed.
 # Uses SHA256 hash comparison to skip unnecessary reinstalls.
-#
-# Handles two execution contexts:
-#   Plugin mode:  CLAUDE_PLUGIN_ROOT and CLAUDE_PLUGIN_DATA are set by Claude Code
-#   Dev mode:     Both env vars are unset; fall back to script's own parent directory
 set -e
 
 # Ensure uv is in PATH (may be in user-level install dirs)
 export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 
-# Resolve project root: use CLAUDE_PLUGIN_ROOT when available (plugin mode),
-# otherwise derive from the script's location (dev mode — script lives in hooks/).
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+# Base directory: ~/.claude/trading-bot/ (installed by npx @alzarak/trading-bot)
+INSTALL_DIR="$HOME/.claude/trading-bot"
 
-# Resolve data directory: prefer project-level trading-bot/ folder,
-# fall back to CLAUDE_PLUGIN_DATA (plugin mode), then .plugin-data/ (dev mode).
-if [ -d "$(pwd)/trading-bot" ]; then
-  DATA_DIR="$(pwd)/trading-bot"
-elif [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
-  DATA_DIR="${CLAUDE_PLUGIN_DATA}"
-else
-  DATA_DIR="${PLUGIN_ROOT}/.plugin-data"
+# Data directory: project-level trading-bot/ folder
+DATA_DIR="$(pwd)/trading-bot"
+if [ ! -d "$DATA_DIR" ]; then
+  DATA_DIR="$INSTALL_DIR"
 fi
 
 VENV_DIR="${DATA_DIR}/venv"
-REQ_FILE="${PLUGIN_ROOT}/requirements.txt"
+REQ_FILE="${INSTALL_DIR}/requirements.txt"
 REQ_HASH_FILE="${DATA_DIR}/requirements.txt.sha256"
 
 # Ensure data directory exists

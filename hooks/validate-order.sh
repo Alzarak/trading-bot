@@ -2,24 +2,12 @@
 # PreToolUse hook — intercepts Bash calls that invoke order submission scripts.
 # Reads tool_input JSON from stdin. Denies if circuit breaker flag exists.
 # IMPORTANT: All debug output to stderr (>&2). Only JSON decisions to stdout.
-#
-# Handles two execution contexts:
-#   Plugin mode:  CLAUDE_PLUGIN_ROOT and CLAUDE_PLUGIN_DATA are set by Claude Code
-#   Dev mode:     Both env vars are unset; fall back to script's own parent directory
 set -uo pipefail
 
-# Resolve project root: use CLAUDE_PLUGIN_ROOT when available (plugin mode),
-# otherwise derive from the script's location (dev mode — script lives in hooks/).
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-
-# Resolve data directory: prefer project-level trading-bot/ folder,
-# fall back to CLAUDE_PLUGIN_DATA (plugin mode), then .plugin-data/ (dev mode).
-if [ -d "$(pwd)/trading-bot" ]; then
-  DATA_DIR="$(pwd)/trading-bot"
-elif [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
-  DATA_DIR="${CLAUDE_PLUGIN_DATA}"
-else
-  DATA_DIR="${PLUGIN_ROOT}/.plugin-data"
+# Data directory: project-level trading-bot/ folder
+DATA_DIR="$(pwd)/trading-bot"
+if [ ! -d "$DATA_DIR" ]; then
+  DATA_DIR="$HOME/.claude/trading-bot"
 fi
 
 # Circuit breaker flag path (written by risk_manager.py)

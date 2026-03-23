@@ -1,8 +1,0 @@
-{
-  "name": "trading-bot",
-  "version": "1.0.0",
-  "description": "Autonomous stock day trading bot for Alpaca Markets. Interactive setup wizard, script generator, and Claude-powered trading loop.",
-  "author": {
-    "name": "Trading Bot"
-  }
-}

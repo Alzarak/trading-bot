@@ -49,24 +49,14 @@ The CLAUDE.md contains the project architecture, key invariants, and technical c
 
 ## Run Generator
 
-Read the config, then run the build generator. The venv location follows the same resolution pattern as the plugin's hooks:
+Read the config, then run the build generator:
 
 ```bash
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-
-# Resolve data dir: project-level trading-bot/ first, then CLAUDE_PLUGIN_DATA, then .plugin-data/
-if [ -d "$(pwd)/trading-bot" ]; then
-  DATA_DIR="$(pwd)/trading-bot"
-elif [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
-  DATA_DIR="${CLAUDE_PLUGIN_DATA}"
-else
-  DATA_DIR="${PLUGIN_ROOT}/.plugin-data"
-fi
-
-VENV_PYTHON="${DATA_DIR}/venv/bin/python"
+INSTALL_DIR="$HOME/.claude/trading-bot"
 BOT_DIR="$(pwd)/trading-bot"
+VENV_PYTHON="${BOT_DIR}/venv/bin/python"
 
-cd "${PLUGIN_ROOT}" && "${VENV_PYTHON}" -c "
+cd "${INSTALL_DIR}" && "${VENV_PYTHON}" -c "
 import json, sys
 sys.path.insert(0, '.')
 from scripts.build_generator import generate_build

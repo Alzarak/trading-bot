@@ -3,7 +3,7 @@
 Lookup order:
 1. TRADING_BOT_DIR env var (explicit override)
 2. ./trading-bot/ in current working directory (project-level, preferred)
-3. CLAUDE_PLUGIN_DATA env var (plugin-level fallback)
+3. ~/.claude/trading-bot/ (install-level fallback)
 4. Current working directory (last resort)
 """
 
@@ -22,9 +22,10 @@ def get_data_dir() -> Path:
     if project_dir.is_dir():
         return project_dir
 
-    # Plugin-level fallback
-    if os.environ.get("CLAUDE_PLUGIN_DATA"):
-        return Path(os.environ["CLAUDE_PLUGIN_DATA"])
+    # Install-level fallback
+    install_dir = Path.home() / ".claude" / "trading-bot"
+    if install_dir.is_dir():
+        return install_dir
 
     # Last resort
     return Path.cwd()

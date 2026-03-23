@@ -1,0 +1,25 @@
+{
+  "name": "@alzarak/trading-bot",
+  "version": "1.0.0",
+  "description": "Autonomous stock day trading bot for Claude Code — Alpaca Markets API",
+  "bin": {
+    "trading-bot": "./bin/install.mjs"
+  },
+  "files": [
+    "bin/",
+    "commands/",
+    "skills/",
+    "agents/",
+    "hooks/",
+    "scripts/",
+    "references/",
+    "requirements.txt"
+  ],
+  "keywords": ["claude-code", "trading", "alpaca", "day-trading", "autonomous"],
+  "author": "Alzarak",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Alzarak/trading-bot.git"
+  }
+}

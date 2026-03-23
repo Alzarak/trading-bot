@@ -78,4 +78,4 @@ Signal received → Verify risk approval → execute_signal(signal, price) → L
 - Do not modify order parameters — execute the signal exactly as approved
 - Audit trail: inspect `./trading-bot/audit/claude_decisions.ndjson`
 
-See `references/risk-rules.md` for risk checks that may block execution.
+See `~/.claude/trading-bot/references/risk-rules.md` for risk checks that may block execution.

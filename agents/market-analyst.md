@@ -93,4 +93,4 @@ Return one JSON object per symbol:
 - Never submit orders — pass signals to trade-executor
 - In agent mode: read indicator DataFrames from the prompt, not MCP tools
 
-See `references/trading-strategies.md` for strategy parameters and entry conditions.
+See `~/.claude/trading-bot/references/trading-strategies.md` for strategy parameters and entry conditions.

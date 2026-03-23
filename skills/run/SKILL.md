@@ -101,7 +101,11 @@ For each symbol's indicator data:
 Parse recommendations through ClaudeAnalyzer, route valid signals through OrderExecutor:
 
 ```bash
-cd "${CLAUDE_PLUGIN_ROOT}" && "${CLAUDE_PLUGIN_ROOT}/.venv/bin/python" -c "
+INSTALL_DIR="$HOME/.claude/trading-bot"
+BOT_DIR="$(pwd)/trading-bot"
+VENV_PYTHON="${BOT_DIR}/venv/bin/python"
+
+cd "${INSTALL_DIR}" && "${VENV_PYTHON}" -c "
 # ... parse and execute recommendations through risk manager
 "
 ```

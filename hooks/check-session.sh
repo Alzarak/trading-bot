@@ -3,15 +3,10 @@
 # Uses exit 0 with JSON output for control decisions.
 set -uo pipefail
 
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-# Resolve data directory: prefer project-level trading-bot/ folder,
-# fall back to CLAUDE_PLUGIN_DATA (plugin mode), then .plugin-data/ (dev mode).
-if [ -d "$(pwd)/trading-bot" ]; then
-  DATA_DIR="$(pwd)/trading-bot"
-elif [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
-  DATA_DIR="${CLAUDE_PLUGIN_DATA}"
-else
-  DATA_DIR="${PLUGIN_ROOT}/.plugin-data"
+# Data directory: project-level trading-bot/ folder
+DATA_DIR="$(pwd)/trading-bot"
+if [ ! -d "$DATA_DIR" ]; then
+  DATA_DIR="$HOME/.claude/trading-bot"
 fi
 
 DB_FILE="${DATA_DIR}/trading.db"
