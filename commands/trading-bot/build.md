@@ -4,4 +4,4 @@ description: "Generate standalone Python trading scripts from config — ready t
 allowed-tools: Bash, Read, Write
 ---
 
-Load and follow the trading-bot build skill at `~/.claude/skills/trading-bot/build/SKILL.md` for the complete build workflow.
+@~/.claude/skills/trading-bot/build/SKILL.md

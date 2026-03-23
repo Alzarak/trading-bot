@@ -2,7 +2,7 @@
 
 import { createInterface } from "readline";
 import { execSync } from "child_process";
-import { existsSync, mkdirSync, cpSync, writeFileSync, readFileSync } from "fs";
+import { existsSync, mkdirSync, cpSync, writeFileSync, readFileSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { homedir } from "os";
@@ -154,6 +154,29 @@ async function main() {
     join(CLAUDE_DIR, "skills", "trading-bot")
   );
   success(`Skills    -> ${prefix}/skills/trading-bot/`);
+
+  // For local installs, rewrite ~/.claude/ paths to ./.claude/ in all .md files
+  if (!installGlobal) {
+    const rewritePaths = (dir) => {
+      if (!existsSync(dir)) return;
+      const entries = readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          rewritePaths(fullPath);
+        } else if (entry.name.endsWith(".md") || entry.name.endsWith(".sh")) {
+          let content = readFileSync(fullPath, "utf8");
+          const updated = content.replace(/~\/\.claude\//g, "./.claude/")
+                                 .replace(/\$HOME\/\.claude\//g, "./.claude/");
+          if (updated !== content) writeFileSync(fullPath, updated);
+        }
+      }
+    };
+    rewritePaths(join(CLAUDE_DIR, "commands"));
+    rewritePaths(join(CLAUDE_DIR, "skills"));
+    rewritePaths(join(CLAUDE_DIR, "agents"));
+    rewritePaths(TRADING_BOT_DIR);
+  }
 
   // Agents — copy individual files with trading-bot- prefix
   const agentsSrc = join(PACKAGE_ROOT, "agents");
@@ -325,15 +348,9 @@ ALPACA_PAPER=true
   console.log("");
   console.log("\x1b[1m  Installation complete!\x1b[0m");
   console.log("");
-  console.log("  Next steps:");
+  console.log("  Next step:");
   console.log("  1. Start Claude Code in this project directory");
-  console.log("  2. Run \x1b[1m/trading-bot:initialize\x1b[0m to configure trading preferences");
-  console.log("  3. Run \x1b[1m/trading-bot:build\x1b[0m to generate trading scripts");
-  console.log("  4. Run \x1b[1m/trading-bot:run\x1b[0m to start autonomous trading");
-  console.log("");
-  if (useMcp) {
-    console.log("  MCP server is configured. Run \x1b[1m/mcp\x1b[0m in Claude Code to verify.");
-  }
+  console.log("  2. Run \x1b[1m/trading-bot:initialize\x1b[0m to configure your trading preferences");
   console.log("");
 
   rl.close();

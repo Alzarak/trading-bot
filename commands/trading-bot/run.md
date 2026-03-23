@@ -4,4 +4,4 @@ description: "Start the autonomous trading loop — agent mode (default) or stan
 allowed-tools: Bash, Read, Write
 ---
 
-Load and follow the trading-bot run skill at `~/.claude/skills/trading-bot/run/SKILL.md` for the complete trading loop workflow.
+@~/.claude/skills/trading-bot/run/SKILL.md

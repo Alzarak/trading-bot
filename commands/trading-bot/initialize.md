@@ -5,4 +5,4 @@ argument-hint: "[--reset]"
 allowed-tools: AskUserQuestion, Write, Bash, Read
 ---
 
-Load and follow the trading-bot initialize skill at `~/.claude/skills/trading-bot/initialize/SKILL.md` for the complete setup wizard workflow.
+@~/.claude/skills/trading-bot/initialize/SKILL.md
