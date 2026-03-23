@@ -10,8 +10,6 @@ import { homedir } from "os";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PACKAGE_ROOT = join(__dirname, "..");
-const CLAUDE_DIR = join(homedir(), ".claude");
-const TRADING_BOT_DIR = join(CLAUDE_DIR, "trading-bot");
 const PROJECT_DIR = process.cwd();
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -42,6 +40,26 @@ async function main() {
   console.log("  Alpaca Markets API | Paper & Live Trading");
   console.log("");
 
+  // Step 0: Install scope
+  const scopeAnswer = await ask(
+    "  Install commands/skills globally or for this project only?\n" +
+    "  1. Global  — available in all projects (~/.claude/)\n" +
+    "  2. Project — only this project (./.claude/)\n" +
+    "  Choice (1/2): "
+  );
+  const installGlobal = scopeAnswer.trim() !== "2";
+  const CLAUDE_DIR = installGlobal
+    ? join(homedir(), ".claude")
+    : join(PROJECT_DIR, ".claude");
+  const TRADING_BOT_DIR = join(
+    installGlobal ? join(homedir(), ".claude") : join(PROJECT_DIR, ".claude"),
+    "trading-bot"
+  );
+
+  console.log("");
+  log(installGlobal ? "Installing globally to ~/.claude/" : "Installing locally to ./.claude/");
+  console.log("");
+
   // Step 1: Alpaca API credentials
   log("Alpaca API credentials (get free keys at https://app.alpaca.markets/)");
   console.log("");
@@ -58,6 +76,32 @@ async function main() {
     warn("Secret key is required. Re-run the installer when you have your keys.");
     rl.close();
     process.exit(1);
+  }
+
+  // Validate API credentials
+  log("Verifying API credentials...");
+  try {
+    const resp = await fetch("https://paper-api.alpaca.markets/v2/account", {
+      headers: {
+        "APCA-API-KEY-ID": apiKey.trim(),
+        "APCA-API-SECRET-KEY": secretKey.trim(),
+      },
+    });
+    if (resp.ok) {
+      const account = await resp.json();
+      success(`Credentials valid — account ${account.account_number} (${account.status})`);
+    } else if (resp.status === 401 || resp.status === 403) {
+      warn("Invalid API credentials. Double-check your key and secret.");
+      const cont = await ask("  Continue anyway? (y/N): ");
+      if (cont.trim().toLowerCase() !== "y") {
+        rl.close();
+        process.exit(1);
+      }
+    } else {
+      warn(`Alpaca API returned status ${resp.status}. Skipping validation.`);
+    }
+  } catch {
+    warn("Could not reach Alpaca API. Skipping validation.");
   }
 
   console.log("");
@@ -94,20 +138,22 @@ async function main() {
   log("Installing files...");
   console.log("");
 
-  // Step 3: Copy files to ~/.claude/
+  const prefix = installGlobal ? "~/.claude" : "./.claude";
+
+  // Step 3: Copy files to CLAUDE_DIR
   // Commands
   copyDir(
     join(PACKAGE_ROOT, "commands", "trading-bot"),
     join(CLAUDE_DIR, "commands", "trading-bot")
   );
-  success("Commands  -> ~/.claude/commands/trading-bot/");
+  success(`Commands  -> ${prefix}/commands/trading-bot/`);
 
   // Skills
   copyDir(
     join(PACKAGE_ROOT, "skills"),
     join(CLAUDE_DIR, "skills", "trading-bot")
   );
-  success("Skills    -> ~/.claude/skills/trading-bot/");
+  success(`Skills    -> ${prefix}/skills/trading-bot/`);
 
   // Agents — copy individual files with trading-bot- prefix
   const agentsSrc = join(PACKAGE_ROOT, "agents");
@@ -118,9 +164,9 @@ async function main() {
       cpSync(join(agentsSrc, file), join(agentsDest, `trading-bot-${file}`));
     }
   }
-  success("Agents    -> ~/.claude/agents/trading-bot-*.md");
+  success(`Agents    -> ${prefix}/agents/trading-bot-*.md`);
 
-  // Scripts, hooks, references, requirements.txt -> ~/.claude/trading-bot/
+  // Scripts, hooks, references, requirements.txt -> trading-bot dir
   mkdirSync(TRADING_BOT_DIR, { recursive: true });
   copyDir(join(PACKAGE_ROOT, "scripts"), join(TRADING_BOT_DIR, "scripts"));
   copyDir(join(PACKAGE_ROOT, "hooks"), join(TRADING_BOT_DIR, "hooks"));
@@ -131,9 +177,9 @@ async function main() {
       join(TRADING_BOT_DIR, "requirements.txt")
     );
   }
-  success("Scripts   -> ~/.claude/trading-bot/scripts/");
-  success("Hooks     -> ~/.claude/trading-bot/hooks/");
-  success("References-> ~/.claude/trading-bot/references/");
+  success(`Scripts   -> ${prefix}/trading-bot/scripts/`);
+  success(`Hooks     -> ${prefix}/trading-bot/hooks/`);
+  success(`References-> ${prefix}/trading-bot/references/`);
 
   // Step 4: Project-level files
   const botDataDir = join(PROJECT_DIR, "trading-bot");
