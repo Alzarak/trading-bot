@@ -679,7 +679,7 @@ def main() -> None:
     scheduler = BackgroundScheduler(timezone="America/New_York")
     scheduler.add_job(
         func=scan_and_trade,
-        trigger=IntervalTrigger(seconds=60),
+        trigger=IntervalTrigger(seconds=300),
         args=[scanner, strategies, executor, tracker, state_store, config],
         id="scan_and_trade",
         name="Market scan and trade cycle",

@@ -177,7 +177,23 @@ Replace `RECOMMENDATIONS_JSON` with the actual JSON array from Step 2. Display r
 
 ### Step 4 — Loop Control
 
-Display scan cycle summary. Ask user to continue (scan again in 60s) or stop. If stopping, display final portfolio summary.
+Display scan cycle summary including:
+- Orders submitted (with symbol, action, shares, price, status)
+- Signals filtered (below threshold)
+- Current positions and P&L
+- Remaining budget
+
+Then offer two options:
+
+> "**What's next?**
+> 1. **Scan again** — run another cycle now
+> 2. **Auto-loop** — copy this command to scan every 5 minutes automatically:
+>    ```
+>    /loop 5m /trading-bot:run
+>    ```
+> 3. **Stop** — end the trading session"
+
+If the user chooses to stop, display final portfolio summary with all open positions and session P&L.
 
 ---
 
@@ -187,3 +203,4 @@ Display scan cycle summary. Ask user to continue (scan again in 60s) or stop. If
 - Risk checks mandatory — OrderExecutor runs RiskManager before every order
 - No direct Alpaca order calls — always route through OrderExecutor
 - ClaudeAnalyzer bridges analysis to execution with consistent JSON validation
+- Scan interval: 5 minutes (standalone mode) — balances signal freshness with API rate limits
