@@ -114,7 +114,7 @@ For each symbol, produce a recommendation as JSON:
 ```
 
 - `action`: `"BUY"`, `"SELL"`, or `"HOLD"`
-- `confidence`: 0.0 to 1.0 — only >= 0.6 will pass through to execution
+- `confidence`: 0.0 to 1.0 — only >= confidence_threshold from config (default 0.45) will pass through to execution
 - `stop_price`: entry price minus (ATR * 2) for BUY, plus (ATR * 2) for SELL
 - `reasoning`: explicit explanation — never omit, required for audit trail
 
@@ -159,7 +159,8 @@ risk_manager = RiskManager(config, trading_client, state_store=state_store, noti
 risk_manager.initialize_session()
 executor = OrderExecutor(risk_manager, config)
 tracker = PortfolioTracker(trading_client, state_store, config, notifier=notifier)
-analyzer = ClaudeAnalyzer(config)
+threshold = config.get('confidence_threshold', 0.45)
+analyzer = ClaudeAnalyzer(config, confidence_threshold=threshold)
 
 recs = json.loads(Path('${BOT_DIR}/recommendations.json').read_text())
 for rec_json in recs:
