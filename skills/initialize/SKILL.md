@@ -83,7 +83,16 @@ Store as `experience_level`: `"beginner"`, `"intermediate"`, or `"expert"`.
 
 ## Step 2 — Involvement Level
 
-Use AskUserQuestion to ask:
+**Beginner:** Use AskUserQuestion to ask:
+
+> "How involved do you want to be while the bot is running?
+>
+> 1. Notify me — the bot trades autonomously but sends you summaries and alerts so you can learn from its decisions
+> 2. Approve trades — the bot finds opportunities but you approve before it executes"
+
+Store as `involvement_level`: `"notify"` or `"approve"`.
+
+**Intermediate/Expert:** Use AskUserQuestion to ask:
 
 > "How involved do you want to be while the bot is running?
 >
@@ -92,8 +101,6 @@ Use AskUserQuestion to ask:
 > 3. Approve trades — the bot finds opportunities but I approve before it executes"
 
 Store as `involvement_level`: `"hands_off"`, `"notify"`, or `"approve"`.
-
-**Beginner override:** If experience is beginner and they chose hands-off, gently note: "Since you're new to trading, the bot will start in notify mode so you can learn from its decisions. You can switch to fully hands-off anytime." Override to `"notify"`.
 
 ## Step 3 — Risk Tolerance
 
