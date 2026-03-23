@@ -126,6 +126,18 @@ class RiskManager:
     # Position sizing
     # ------------------------------------------------------------------
 
+    def _get_total_exposure(self) -> float:
+        """Return total market value of all open positions.
+
+        Used to enforce budget_usd as a portfolio-wide cap, not per-trade.
+        """
+        try:
+            positions = self.client.get_all_positions()
+            return sum(abs(float(p.market_value)) for p in positions)
+        except Exception as exc:
+            logger.warning("_get_total_exposure: failed to fetch positions: {}", exc)
+            return 0.0
+
     def calculate_position_size(
         self,
         symbol: str,
@@ -164,14 +176,25 @@ class RiskManager:
 
         position_value = equity * (effective_pct / 100.0)
 
-        # Cap at budget_usd
+        # Cap at budget_usd (total across ALL positions, not per-trade)
         budget = float(self.config.get("budget_usd", equity))
-        if position_value > budget:
-            logger.info(
-                "Position value ${:.2f} exceeds budget ${:.2f} — capping",
-                position_value, budget,
+        current_exposure = self._get_total_exposure()
+        remaining_budget = max(budget - current_exposure, 0.0)
+
+        if remaining_budget <= 0:
+            logger.warning(
+                "Budget exhausted: ${:.2f} exposure >= ${:.2f} budget — blocking",
+                current_exposure, budget,
             )
-            position_value = budget
+            return 0
+
+        if position_value > remaining_budget:
+            logger.info(
+                "Position value ${:.2f} exceeds remaining budget ${:.2f} "
+                "(${:.2f} used of ${:.2f}) — capping",
+                position_value, remaining_budget, current_exposure, budget,
+            )
+            position_value = remaining_budget
 
         shares = math.floor(position_value / current_price)
 
