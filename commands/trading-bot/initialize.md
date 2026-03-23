@@ -1,5 +1,5 @@
 ---
-name: initialize
+name: trading-bot:initialize
 description: "Interactive setup wizard — configure trading bot preferences and generate config.json"
 argument-hint: "[--reset]"
 allowed-tools: AskUserQuestion, Write, Bash, Read
