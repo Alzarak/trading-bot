@@ -2,13 +2,17 @@
 # Wrapper script to launch the Alpaca MCP server with credentials from .env
 # Used by: claude mcp add alpaca ... -- bash start-mcp.sh
 
-# Find the .env file: project-level trading-bot/ first, then current directory
-if [ -f "$(pwd)/trading-bot/.env" ]; then
-  ENV_FILE="$(pwd)/trading-bot/.env"
-elif [ -f "$(pwd)/.env" ]; then
-  ENV_FILE="$(pwd)/.env"
+# Resolve paths relative to this script's location (inside the plugin)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# Find the .env file: plugin's trading-bot/ subfolder first, then plugin root
+if [ -f "$PLUGIN_ROOT/trading-bot/.env" ]; then
+  ENV_FILE="$PLUGIN_ROOT/trading-bot/.env"
+elif [ -f "$PLUGIN_ROOT/.env" ]; then
+  ENV_FILE="$PLUGIN_ROOT/.env"
 else
-  echo "No .env file found. Add your Alpaca keys to ./trading-bot/.env" >&2
+  echo "No .env file found. Add your Alpaca keys to $PLUGIN_ROOT/trading-bot/.env" >&2
   exit 1
 fi
 

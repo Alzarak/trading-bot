@@ -39,26 +39,41 @@ Do NOT proceed with the build if any required files are missing.
 
 ## Load Context
 
-Read both files to understand what to build:
+Read these files to understand the project and what to build:
 
-1. Read `./trading-bot/config.json` for structured configuration values
-2. Read `./trading-bot/setup-context.md` for the full setup plan and build instructions
+1. Read `CLAUDE.md` in the current project root for project architecture, constraints, and conventions
+2. Read `./trading-bot/config.json` for structured configuration values
+3. Read `./trading-bot/setup-context.md` for the full setup plan and build instructions
 
-The setup-context.md contains the user's profile, strategy decisions, and explicit build instructions written by the initialize step. Follow those instructions.
+The CLAUDE.md contains the project architecture, key invariants, and technical constraints. The setup-context.md contains the user's profile, strategy decisions, and explicit build instructions written by the initialize step. Follow those instructions.
 
 ## Run Generator
 
-Read the config, then run the build generator:
+Read the config, then run the build generator. The venv location follows the same resolution pattern as the plugin's hooks:
 
 ```bash
-cd "${CLAUDE_PLUGIN_ROOT}" && "${CLAUDE_PLUGIN_ROOT}/.venv/bin/python" -c "
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+
+# Resolve data dir: project-level trading-bot/ first, then CLAUDE_PLUGIN_DATA, then .plugin-data/
+if [ -d "$(pwd)/trading-bot" ]; then
+  DATA_DIR="$(pwd)/trading-bot"
+elif [ -n "${CLAUDE_PLUGIN_DATA:-}" ]; then
+  DATA_DIR="${CLAUDE_PLUGIN_DATA}"
+else
+  DATA_DIR="${PLUGIN_ROOT}/.plugin-data"
+fi
+
+VENV_PYTHON="${DATA_DIR}/venv/bin/python"
+BOT_DIR="$(pwd)/trading-bot"
+
+cd "${PLUGIN_ROOT}" && "${VENV_PYTHON}" -c "
 import json, sys
 sys.path.insert(0, '.')
 from scripts.build_generator import generate_build
 from pathlib import Path
 
-config = json.loads(Path('./trading-bot/config.json').resolve().read_text())
-output_dir = Path('./trading-bot/standalone').resolve()
+config = json.loads(Path('${BOT_DIR}/config.json').read_text())
+output_dir = Path('${BOT_DIR}/standalone')
 result = generate_build(config, output_dir)
 print(json.dumps(result, indent=2))
 "
@@ -73,15 +88,8 @@ Display:
 
 ## Next Steps
 
-Provide deployment instructions:
+Tell the user:
 
-1. Copy directory to server: `scp -r {output_dir} user@server:/path/`
-2. Set up API credentials: `cp .env.template .env` and edit
-3. Install deps: `pip install -r requirements.txt` (or `uv pip install`)
-4. Start bot: `python bot.py`
-5. For unattended operation: see `DEPLOY.md` for systemd setup
-6. Monitor logs in `logs/` directory
+"**Next step:** Type `/clear` to reset the conversation context, then run `/trading-bot:run` to start autonomous trading. Clearing first gives the run step a clean context — your bot scripts are built and ready to go."
 
 **Security reminder:** `.env` contains API keys. The `.gitignore` prevents accidental commits. Bot defaults to paper trading (`ALPACA_PAPER=true`).
-
-To run directly from Claude Code instead, use `/trading-bot:run`.

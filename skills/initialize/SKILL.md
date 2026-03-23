@@ -277,8 +277,10 @@ Both the API key and secret key are required — the bot and MCP server won't wo
 
 Display summary table including MCP status and involvement mode, then set expectations:
 
-**Hands-off/Notify:** "Your bot is configured to trade autonomously. After building, just run `/trading-bot:run` and it will scan markets, analyze opportunities with Claude, and execute trades on its own within your risk limits."
+**Hands-off/Notify:** "Your bot is configured to trade autonomously — it will scan markets, analyze opportunities with Claude, and execute trades on its own within your risk limits."
 
-**Approve:** "Your bot is configured to find trades and ask for your approval before executing. Run `/trading-bot:run` and it will present opportunities for you to approve or skip."
+**Approve:** "Your bot is configured to find trades and ask for your approval before executing."
 
-Tell the user the next step is `/trading-bot:build` to generate the trading scripts, then `/trading-bot:run` to start autonomous trading.
+Tell the user:
+
+"**Next step:** Type `/clear` to reset the conversation context, then run `/trading-bot:build` to generate your trading scripts. Clearing first gives the build step a clean context — all your setup choices are saved in `config.json` and `setup-context.md` so nothing is lost."
