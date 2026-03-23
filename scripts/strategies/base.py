@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
-from scripts.types import Signal
+from scripts.models import Signal
 
 
 class BaseStrategy(ABC):

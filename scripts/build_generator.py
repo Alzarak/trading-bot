@@ -8,7 +8,7 @@ Usage:
     from pathlib import Path
 
     config = json.loads(Path("config.json").read_text())
-    result = generate_build(config, Path("trading-bot-standalone"))
+    result = generate_build(config, Path("trading-bot-bot"))
     print(result)
 """
 from pathlib import Path
@@ -27,7 +27,7 @@ _STRATEGY_CLASS_MAP: dict[str, str] = {
 # Source files for core modules (relative to scripts/ directory)
 _CORE_FILES = [
     "bot.py",
-    "types.py",
+    "models.py",
     "market_scanner.py",
     "order_executor.py",
     "risk_manager.py",
@@ -198,7 +198,7 @@ def generate_build(config: dict, output_dir: Path | None = None) -> dict:
     Args:
         config: Parsed config.json dict (from /initialize wizard).
         output_dir: Destination path for the standalone directory.
-                    Defaults to "trading-bot-standalone" in the current directory.
+                    Defaults to "trading-bot-bot" in the current directory.
 
     Returns:
         Dict with keys:
@@ -207,7 +207,7 @@ def generate_build(config: dict, output_dir: Path | None = None) -> dict:
         - "strategies_included": list of strategy names included
     """
     if output_dir is None:
-        output_dir = Path("trading-bot-standalone")
+        output_dir = Path("trading-bot-bot")
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -278,212 +278,7 @@ def generate_build(config: dict, output_dir: Path | None = None) -> dict:
     files_generated.append("strategies/__init__.py")
 
     # ------------------------------------------------------------------
-    # 3. Write config.json to output directory
-    # ------------------------------------------------------------------
-    import json
-
-    config_out = output_dir / "config.json"
-    config_out.write_text(json.dumps(config, indent=2))
-    files_generated.append("config.json")
-
-    # ------------------------------------------------------------------
-    # 4. Generate .env.template — placeholder keys only, never real values
-    # ------------------------------------------------------------------
-    env_template_content = """\
-# Alpaca API Credentials
-# Get your keys at: https://app.alpaca.markets/
-# Paper trading keys: https://app.alpaca.markets/paper/dashboard/overview
-ALPACA_API_KEY=
-ALPACA_SECRET_KEY=
-
-# Set to "true" for paper trading (simulated), "false" for live trading
-# WARNING: Setting to "false" uses real money. Double-check all settings first.
-ALPACA_PAPER=true
-"""
-    (output_dir / ".env.template").write_text(env_template_content)
-    files_generated.append(".env.template")
-
-    # ------------------------------------------------------------------
-    # 5. Generate .gitignore — excludes secrets and build artifacts
-    # ------------------------------------------------------------------
-    gitignore_content = """\
-# Secrets — NEVER commit
-.env
-
-# Database
-trading.db
-trading.db-wal
-trading.db-shm
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-venv/
-
-# Logs
-logs/
-*.log
-
-# IDE
-.vscode/
-.idea/
-"""
-    (output_dir / ".gitignore").write_text(gitignore_content)
-    files_generated.append(".gitignore")
-
-    # ------------------------------------------------------------------
-    # 6. Generate requirements.txt — runtime deps only (no rich)
-    # ------------------------------------------------------------------
-    requirements_content = """\
-alpaca-py==0.43.2
-pandas-ta==0.4.71b0
-pandas>=2.0
-numpy>=1.26
-APScheduler>=3.10,<4.0
-pydantic-settings>=2.0
-loguru>=0.7
-python-dotenv>=1.0
-"""
-    (output_dir / "requirements.txt").write_text(requirements_content)
-    files_generated.append("requirements.txt")
-
-    # ------------------------------------------------------------------
-    # 7. Generate run.sh — bash launcher that loads .env and starts bot
-    # ------------------------------------------------------------------
-    run_sh_content = """\
-#!/bin/bash
-# Trading Bot Launcher
-# Loads .env and starts the bot
-
-set -euo pipefail
-cd "$(dirname "$0")"
-
-if [ ! -f .env ]; then
-    echo "ERROR: .env file not found. Copy .env.template to .env and fill in your API keys."
-    exit 1
-fi
-
-# Export all variables from .env
-set -a
-source .env
-set +a
-
-echo "Starting trading bot (paper=$ALPACA_PAPER)..."
-python bot.py
-"""
-    (output_dir / "run.sh").write_text(run_sh_content)
-    files_generated.append("run.sh")
-
-    # ------------------------------------------------------------------
-    # 8. Generate DEPLOY.md — deployment instructions (cron + systemd)
-    # ------------------------------------------------------------------
-    deploy_md_content = """\
-# Trading Bot Deployment Guide
-
-## Quick Start
-
-1. Copy this directory to your server
-2. Set up API credentials:
-   ```bash
-   cp .env.template .env
-   # Edit .env and add your Alpaca API keys
-   ```
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   # Or with uv (faster): uv pip install -r requirements.txt
-   ```
-4. Start the bot:
-   ```bash
-   python bot.py
-   # Or use the launcher script: ./run.sh
-   ```
-
-## Cron Setup (simple auto-restart on reboot)
-
-The bot runs its own internal scheduler (APScheduler) — it handles the 60-second
-scan loop and checks market hours internally. Cron is only needed for auto-restart
-on reboot.
-
-Edit your crontab with `crontab -e` and add:
-
-```
-# Restart trading bot on system reboot
-@reboot cd /path/to/trading-bot-standalone && ./run.sh >> logs/bot.log 2>&1
-```
-
-The bot checks market hours internally (9:30am–4:00pm ET, weekdays only).
-It is safe to run 24/7 — it will skip scanning outside market hours.
-
-If you prefer a scheduled cron entry instead of @reboot, weekdays-only pattern:
-```
-# Example: run every minute on weekdays (bot handles internal scheduling)
-* * * * 1-5 cd /path/to/trading-bot-standalone && ./run.sh >> logs/bot.log 2>&1
-```
-
-## Systemd Setup (recommended for VPS — survives reboots, auto-restarts on failure)
-
-### 1. Create the service file
-
-```ini
-[Unit]
-Description=Autonomous Trading Bot
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-WorkingDirectory=/path/to/trading-bot-standalone
-ExecStart=/usr/bin/python3 bot.py
-EnvironmentFile=/path/to/trading-bot-standalone/.env
-Restart=on-failure
-RestartSec=30
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### 2. Install and enable the service
-
-```bash
-sudo cp trading-bot.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable trading-bot
-sudo systemctl start trading-bot
-```
-
-### 3. Useful systemd commands
-
-```bash
-# Check status
-sudo systemctl status trading-bot
-
-# View logs
-sudo journalctl -u trading-bot -f
-
-# Stop the bot
-sudo systemctl stop trading-bot
-
-# Restart the bot
-sudo systemctl restart trading-bot
-```
-
-## Security Notes
-
-- Your `.env` file contains API keys — the included `.gitignore` prevents
-  accidentally committing it to git.
-- The bot defaults to **paper trading** mode (`ALPACA_PAPER=true`).
-  Only set `ALPACA_PAPER=false` when you are ready to trade with real money.
-- Restrict file permissions on `.env`: `chmod 600 .env`
-- Never share or commit your `.env` file.
-"""
-    (output_dir / "DEPLOY.md").write_text(deploy_md_content)
-    files_generated.append("DEPLOY.md")
-
-    # ------------------------------------------------------------------
-    # 9. Return summary
+    # 3. Return summary
     # ------------------------------------------------------------------
     return {
         "output_dir": str(output_dir),

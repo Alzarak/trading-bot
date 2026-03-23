@@ -40,77 +40,112 @@ async function main() {
   console.log("  Alpaca Markets API | Paper & Live Trading");
   console.log("");
 
-  // Step 0: Install scope
-  const scopeAnswer = await ask(
-    "  Install commands/skills globally or for this project only?\n" +
-    "  1. Global  — available in all projects (~/.claude/)\n" +
-    "  2. Project — only this project (./.claude/)\n" +
-    "  Choice (1/2): "
-  );
-  const installGlobal = scopeAnswer.trim() !== "2";
+  // Step 0: Install scope — auto-detect on reinstall
+  let installGlobal;
+  const localExists = existsSync(join(PROJECT_DIR, ".claude", "commands", "trading-bot"));
+  const globalExists = existsSync(join(homedir(), ".claude", "commands", "trading-bot"));
+
+  if (localExists) {
+    installGlobal = false;
+    log("Updating existing local install (./.claude/)");
+  } else if (globalExists) {
+    installGlobal = true;
+    log("Updating existing global install (~/.claude/)");
+  } else {
+    const scopeAnswer = await ask(
+      "  Install commands/skills globally or for this project only?\n" +
+      "  1. Global  — available in all projects (~/.claude/)\n" +
+      "  2. Project — only this project (./.claude/)\n" +
+      "  Choice (1/2): "
+    );
+    installGlobal = scopeAnswer.trim() !== "2";
+    log(installGlobal ? "Installing globally to ~/.claude/" : "Installing locally to ./.claude/");
+  }
+
   const CLAUDE_DIR = installGlobal
     ? join(homedir(), ".claude")
     : join(PROJECT_DIR, ".claude");
-  const TRADING_BOT_DIR = join(
-    installGlobal ? join(homedir(), ".claude") : join(PROJECT_DIR, ".claude"),
-    "trading-bot"
-  );
-
-  console.log("");
-  log(installGlobal ? "Installing globally to ~/.claude/" : "Installing locally to ./.claude/");
+  const TRADING_BOT_DIR = join(CLAUDE_DIR, "trading-bot");
   console.log("");
 
-  // Step 1: Alpaca API credentials
-  log("Alpaca API credentials (get free keys at https://app.alpaca.markets/)");
-  console.log("");
+  // Step 1: Alpaca API credentials — skip if .env already has keys
+  const envPath = join(PROJECT_DIR, "trading-bot", ".env");
+  let apiKey = "";
+  let secretKey = "";
+  let existingEnv = false;
 
-  const apiKey = await ask("  Alpaca API Key: ");
-  if (!apiKey.trim()) {
-    warn("API key is required. Re-run the installer when you have your keys.");
-    rl.close();
-    process.exit(1);
-  }
-
-  const secretKey = await ask("  Alpaca Secret Key: ");
-  if (!secretKey.trim()) {
-    warn("Secret key is required. Re-run the installer when you have your keys.");
-    rl.close();
-    process.exit(1);
-  }
-
-  // Validate API credentials
-  log("Verifying API credentials...");
-  try {
-    const resp = await fetch("https://paper-api.alpaca.markets/v2/account", {
-      headers: {
-        "APCA-API-KEY-ID": apiKey.trim(),
-        "APCA-API-SECRET-KEY": secretKey.trim(),
-      },
-    });
-    if (resp.ok) {
-      const account = await resp.json();
-      success(`Credentials valid — account ${account.account_number} (${account.status})`);
-    } else if (resp.status === 401 || resp.status === 403) {
-      warn("Invalid API credentials. Double-check your key and secret.");
-      const cont = await ask("  Continue anyway? (y/N): ");
-      if (cont.trim().toLowerCase() !== "y") {
-        rl.close();
-        process.exit(1);
-      }
-    } else {
-      warn(`Alpaca API returned status ${resp.status}. Skipping validation.`);
+  if (existsSync(envPath)) {
+    const envContent = readFileSync(envPath, "utf8");
+    const keyMatch = envContent.match(/^ALPACA_API_KEY=(.+)$/m);
+    const secretMatch = envContent.match(/^ALPACA_SECRET_KEY=(.+)$/m);
+    if (keyMatch?.[1]?.trim() && secretMatch?.[1]?.trim()) {
+      apiKey = keyMatch[1].trim();
+      secretKey = secretMatch[1].trim();
+      existingEnv = true;
+      success(`API credentials found in existing .env (key: ${apiKey.slice(0, 4)}...)`);
     }
-  } catch {
-    warn("Could not reach Alpaca API. Skipping validation.");
+  }
+
+  if (!existingEnv) {
+    log("Alpaca API credentials (get free keys at https://app.alpaca.markets/)");
+    console.log("");
+
+    apiKey = await ask("  Alpaca API Key: ");
+    if (!apiKey.trim()) {
+      warn("API key is required. Re-run the installer when you have your keys.");
+      rl.close();
+      process.exit(1);
+    }
+
+    secretKey = await ask("  Alpaca Secret Key: ");
+    if (!secretKey.trim()) {
+      warn("Secret key is required. Re-run the installer when you have your keys.");
+      rl.close();
+      process.exit(1);
+    }
+
+    // Validate API credentials
+    log("Verifying API credentials...");
+    try {
+      const resp = await fetch("https://paper-api.alpaca.markets/v2/account", {
+        headers: {
+          "APCA-API-KEY-ID": apiKey.trim(),
+          "APCA-API-SECRET-KEY": secretKey.trim(),
+        },
+      });
+      if (resp.ok) {
+        const account = await resp.json();
+        success(`Credentials valid — account ${account.account_number} (${account.status})`);
+      } else if (resp.status === 401 || resp.status === 403) {
+        warn("Invalid API credentials. Double-check your key and secret.");
+        const cont = await ask("  Continue anyway? (y/N): ");
+        if (cont.trim().toLowerCase() !== "y") {
+          rl.close();
+          process.exit(1);
+        }
+      } else {
+        warn(`Alpaca API returned status ${resp.status}. Skipping validation.`);
+      }
+    } catch {
+      warn("Could not reach Alpaca API. Skipping validation.");
+    }
   }
 
   console.log("");
 
-  // Step 2: MCP server
-  const mcpAnswer = await ask(
-    "  Enable Alpaca MCP server? Gives Claude 44 real-time API tools. (Y/n): "
-  );
-  const useMcp = mcpAnswer.trim().toLowerCase() !== "n";
+  // Step 2: MCP server — skip if .mcp.json already exists
+  const mcpPath = join(PROJECT_DIR, ".mcp.json");
+  let useMcp = false;
+
+  if (existsSync(mcpPath)) {
+    useMcp = true;
+    success("MCP server already configured (.mcp.json exists)");
+  } else {
+    const mcpAnswer = await ask(
+      "  Enable Alpaca MCP server? Gives Claude 44 real-time API tools. (Y/n): "
+    );
+    useMcp = mcpAnswer.trim().toLowerCase() !== "n";
+  }
 
   if (useMcp) {
     // Check uvx
@@ -155,29 +190,6 @@ async function main() {
   );
   success(`Skills    -> ${prefix}/skills/trading-bot/`);
 
-  // For local installs, rewrite ~/.claude/ paths to ./.claude/ in all .md files
-  if (!installGlobal) {
-    const rewritePaths = (dir) => {
-      if (!existsSync(dir)) return;
-      const entries = readdirSync(dir, { withFileTypes: true });
-      for (const entry of entries) {
-        const fullPath = join(dir, entry.name);
-        if (entry.isDirectory()) {
-          rewritePaths(fullPath);
-        } else if (entry.name.endsWith(".md") || entry.name.endsWith(".sh")) {
-          let content = readFileSync(fullPath, "utf8");
-          const updated = content.replace(/~\/\.claude\//g, "./.claude/")
-                                 .replace(/\$HOME\/\.claude\//g, "./.claude/");
-          if (updated !== content) writeFileSync(fullPath, updated);
-        }
-      }
-    };
-    rewritePaths(join(CLAUDE_DIR, "commands"));
-    rewritePaths(join(CLAUDE_DIR, "skills"));
-    rewritePaths(join(CLAUDE_DIR, "agents"));
-    rewritePaths(TRADING_BOT_DIR);
-  }
-
   // Agents — copy individual files with trading-bot- prefix
   const agentsSrc = join(PACKAGE_ROOT, "agents");
   const agentsDest = join(CLAUDE_DIR, "agents");
@@ -203,6 +215,30 @@ async function main() {
   success(`Scripts   -> ${prefix}/trading-bot/scripts/`);
   success(`Hooks     -> ${prefix}/trading-bot/hooks/`);
   success(`References-> ${prefix}/trading-bot/references/`);
+
+  // For local installs, rewrite ~/.claude/ paths to ./.claude/ in all copied files
+  if (!installGlobal) {
+    const rewritePaths = (dir) => {
+      if (!existsSync(dir)) return;
+      const entries = readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          rewritePaths(fullPath);
+        } else if (entry.name.endsWith(".md") || entry.name.endsWith(".sh")) {
+          let content = readFileSync(fullPath, "utf8");
+          const updated = content.replace(/~\/\.claude\//g, "./.claude/")
+                                 .replace(/\$HOME\/\.claude\//g, "./.claude/");
+          if (updated !== content) writeFileSync(fullPath, updated);
+        }
+      }
+    };
+    rewritePaths(join(CLAUDE_DIR, "commands"));
+    rewritePaths(join(CLAUDE_DIR, "skills"));
+    rewritePaths(join(CLAUDE_DIR, "agents"));
+    rewritePaths(TRADING_BOT_DIR);
+    success("Path references rewritten for local install");
+  }
 
   // Step 4: Project-level files
   const botDataDir = join(PROJECT_DIR, "trading-bot");
@@ -331,13 +367,15 @@ ALPACA_PAPER=true
   log("Installing Python dependencies...");
   try {
     const venvDir = join(botDataDir, "venv");
-    execSync(`uv venv "${venvDir}" --python python3 --quiet 2>/dev/null || uv venv "${venvDir}" --quiet`, {
-      stdio: "inherit",
-      shell: true,
-    });
+    if (!existsSync(join(venvDir, "bin", "python"))) {
+      execSync(`uv venv "${venvDir}" --python python3 --quiet 2>/dev/null || uv venv "${venvDir}" --quiet`, {
+        stdio: "pipe",
+        shell: true,
+      });
+    }
     execSync(
       `uv pip install -r "${join(TRADING_BOT_DIR, "requirements.txt")}" --python "${join(venvDir, "bin", "python")}" --quiet`,
-      { stdio: "inherit", shell: true }
+      { stdio: "pipe", shell: true }
     );
     success("Python dependencies installed");
   } catch {
@@ -345,12 +383,22 @@ ALPACA_PAPER=true
   }
 
   // Done
+  const configPath = join(PROJECT_DIR, "trading-bot", "config.json");
+  const hasConfig = existsSync(configPath) && readFileSync(configPath, "utf8").trim() !== "{}";
+
   console.log("");
-  console.log("\x1b[1m  Installation complete!\x1b[0m");
-  console.log("");
-  console.log("  To configure your trading preferences, run:");
-  console.log("");
-  console.log("    \x1b[1mclaude /trading-bot:initialize\x1b[0m");
+  if (hasConfig) {
+    console.log("\x1b[1m  Update complete!\x1b[0m");
+    console.log("");
+    console.log("  Your existing configuration has been preserved.");
+    console.log("  Scripts and skills have been updated to the latest version.");
+  } else {
+    console.log("\x1b[1m  Installation complete!\x1b[0m");
+    console.log("");
+    console.log("  To configure your trading preferences, run:");
+    console.log("");
+    console.log("    \x1b[1mclaude /trading-bot:initialize\x1b[0m");
+  }
   console.log("");
 
   rl.close();

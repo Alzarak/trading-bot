@@ -1,4 +1,5 @@
 alpaca-py==0.43.2
+pytz>=2024.1
 pandas-ta==0.4.71b0
 pandas>=2.0
 numpy>=1.26

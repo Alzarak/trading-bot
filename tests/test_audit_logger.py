@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from scripts.audit_logger import AuditLogger
-from scripts.types import ClaudeRecommendation
+from scripts.models import ClaudeRecommendation
 
 
 def _make_rec(

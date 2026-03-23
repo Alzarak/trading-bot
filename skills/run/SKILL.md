@@ -45,10 +45,10 @@ Otherwise: run **AGENT MODE** (default).
 
 ## STANDALONE MODE
 
-Verify standalone directory exists, then run:
+Verify bot directory exists, then run:
 
 ```bash
-cd "$(pwd)/trading-bot/standalone" && python bot.py
+cd "$(pwd)/trading-bot/bot" && python bot.py
 ```
 
 If directory missing: tell user to run `/trading-bot:build` first.
@@ -57,62 +57,124 @@ If directory missing: tell user to run `/trading-bot:build` first.
 
 ## AGENT MODE
 
-Run the trading loop within Claude Code. Act as the market analyst — analyze indicator data and produce JSON recommendations. The Python risk manager validates all signals before order execution.
+Run the trading loop within Claude Code using external scripts. Claude analyzes indicator output and produces JSON recommendations. The Python risk manager validates all signals before order execution.
 
 **NEVER call Alpaca order APIs directly. All orders go through OrderExecutor and RiskManager.**
+**NEVER write inline Python that creates Alpaca clients or constructors. Always call the provided scripts.**
 
-### Step 1 — Initialize Components
+### Path variables
 
-Load config, print watchlist and active strategies.
+Use these exact variables for ALL bash commands in this skill:
+```
+BOT_DIR="$(pwd)/trading-bot"
+VENV="${BOT_DIR}/venv/bin/python"
+SCRIPTS="$(pwd)/.claude/trading-bot"
+```
 
-### Step 2 — Market Hours Check
+### Step 1 — Scan Market Indicators
 
-Check if market is open via MarketScanner. If closed: ask user whether to continue (testing) or wait for market hours.
+Run the scan script. Do NOT modify this command — copy it exactly:
 
-### Step 3 — Scan Indicators
+```bash
+BOT_DIR="$(pwd)/trading-bot"
+VENV="${BOT_DIR}/venv/bin/python"
+SCRIPTS="$(pwd)/.claude/trading-bot"
 
-For each watchlist symbol, use `MarketScanner.scan()` and `ClaudeAnalyzer.build_analysis_prompt()` to fetch indicator data and generate analysis prompts.
+PYTHONPATH="${SCRIPTS}" ${VENV} "${SCRIPTS}/scripts/cli_scan.py"
+```
 
-### Step 4 — Analyze Each Symbol
+To scan specific symbols instead of the config watchlist:
+```bash
+PYTHONPATH="${SCRIPTS}" ${VENV} "${SCRIPTS}/scripts/cli_scan.py" AAPL MSFT NVDA
+```
 
-For each symbol's indicator data:
+Display the scan results to the user. If market is closed, ask whether to continue (for testing) or wait.
 
-1. Read the indicator table carefully
-2. Apply strategy analysis logic:
-   - **momentum**: RSI extremes, MACD histogram direction, EMA crossovers
-   - **mean_reversion**: Bollinger Band extremes, RSI reversals
-   - **breakout**: Price breaking resistance with volume, ATR expansion
-3. Return ClaudeRecommendation JSON:
+### Step 2 — Analyze Each Symbol
+
+Read the indicator output from Step 1. For each symbol, apply the configured strategy logic:
+
+- **momentum**: RSI extremes (>70 overbought, <30 oversold), MACD histogram direction, EMA crossovers
+- **mean_reversion**: Bollinger Band extremes, RSI reversals
+- **breakout**: Price breaking resistance with volume, ATR expansion
+- **vwap**: Price vs VWAP reversion
+
+For each symbol, produce a recommendation as JSON:
 
 ```json
 {
   "symbol": "AAPL",
   "action": "BUY",
   "confidence": 0.78,
-  "reasoning": "explicit explanation",
+  "reasoning": "RSI at 28 (oversold), MACD histogram turning positive, EMA_9 crossing above EMA_21",
   "strategy": "momentum",
   "atr": 1.45,
   "stop_price": 148.55
 }
 ```
 
-### Step 5 — Execute Signals
+- `action`: `"BUY"`, `"SELL"`, or `"HOLD"`
+- `confidence`: 0.0 to 1.0 — only >= 0.6 will pass through to execution
+- `stop_price`: entry price minus (ATR * 2) for BUY, plus (ATR * 2) for SELL
+- `reasoning`: explicit explanation — never omit, required for audit trail
 
-Parse recommendations through ClaudeAnalyzer, route valid signals through OrderExecutor:
+### Step 3 — Execute Signals
+
+Write the recommendations from Step 2 to a JSON file, then run through the execution pipeline:
 
 ```bash
-INSTALL_DIR="$HOME/.claude/trading-bot"
 BOT_DIR="$(pwd)/trading-bot"
-VENV_PYTHON="${BOT_DIR}/venv/bin/python"
+VENV="${BOT_DIR}/venv/bin/python"
+SCRIPTS="$(pwd)/.claude/trading-bot"
 
-cd "${INSTALL_DIR}" && "${VENV_PYTHON}" -c "
-# ... parse and execute recommendations through risk manager
+# Write recommendations to file (replace RECOMMENDATIONS_JSON with actual JSON array)
+cat > "${BOT_DIR}/recommendations.json" << 'RECEOF'
+RECOMMENDATIONS_JSON
+RECEOF
+
+PYTHONPATH="${SCRIPTS}" ${VENV} -c "
+import json, os, sys
+sys.path.insert(0, '${SCRIPTS}')
+
+from dotenv import load_dotenv
+load_dotenv('${BOT_DIR}/.env')
+
+from scripts.bot import create_clients, load_config
+from scripts.order_executor import OrderExecutor
+from scripts.risk_manager import RiskManager
+from scripts.state_store import StateStore
+from scripts.audit_logger import AuditLogger
+from scripts.claude_analyzer import ClaudeAnalyzer
+from scripts.bot import execute_claude_recommendation
+from scripts.portfolio_tracker import PortfolioTracker
+from scripts.notifier import Notifier
+from pathlib import Path
+
+config = json.loads(Path('${BOT_DIR}/config.json').read_text())
+trading_client, data_client = create_clients(config)
+state_store = StateStore(Path('${BOT_DIR}/trading.db'))
+audit_logger = AuditLogger(Path('${BOT_DIR}'))
+notifier = Notifier(config)
+risk_manager = RiskManager(config, trading_client, state_store=state_store, notifier=notifier)
+risk_manager.initialize_session()
+executor = OrderExecutor(risk_manager, config)
+tracker = PortfolioTracker(trading_client, state_store, config, notifier=notifier)
+analyzer = ClaudeAnalyzer(config)
+
+recs = json.loads(Path('${BOT_DIR}/recommendations.json').read_text())
+for rec_json in recs:
+    result = execute_claude_recommendation(
+        json.dumps(rec_json), executor, tracker, state_store, audit_logger, analyzer
+    )
+    print(json.dumps(result, indent=2))
+
+state_store.close()
 "
 ```
 
-Replace placeholder with actual JSON recommendations from Step 4.
+Replace `RECOMMENDATIONS_JSON` with the actual JSON array from Step 2. Display results to user.
 
-### Step 6 — Loop Control
+### Step 4 — Loop Control
 
 Display scan cycle summary. Ask user to continue (scan again in 60s) or stop. If stopping, display final portfolio summary.
 

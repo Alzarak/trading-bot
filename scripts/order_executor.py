@@ -31,7 +31,7 @@ except ImportError:
     TakeProfitRequest = None  # type: ignore[assignment]
     TrailingStopOrderRequest = None  # type: ignore[assignment]
 
-from scripts.types import Signal
+from scripts.models import Signal
 
 
 class OrderExecutor:

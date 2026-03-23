@@ -7,7 +7,7 @@ by the Claude analysis pipeline.
 
 Usage:
     from scripts.audit_logger import AuditLogger
-    from scripts.types import ClaudeRecommendation
+    from scripts.models import ClaudeRecommendation
 
     audit_logger = AuditLogger()
     audit_logger.log_recommendation(rec)
@@ -21,7 +21,7 @@ from pathlib import Path
 from loguru import logger
 
 from scripts.paths import get_data_dir
-from scripts.types import ClaudeRecommendation
+from scripts.models import ClaudeRecommendation
 
 
 class AuditLogger:
