@@ -37,10 +37,11 @@ except ImportError:  # pragma: no cover
 ET = ZoneInfo("America/New_York")
 
 # Fallback watchlist for small budgets when screener API is unavailable.
-# These are high-volume, exchange-listed stocks typically under $15.
+# These are high-volume, exchange-listed stocks typically $1-$15.
+# All above $1.00 to avoid Alpaca bracket order minimum increment issues.
 _LOW_PRICE_FALLBACK = [
     "SOFI", "PLTR", "NIO", "GRAB", "RIVN",
-    "LCID", "SNAP", "PINS", "HOOD", "DNA",
+    "LCID", "SNAP", "PINS", "HOOD", "SIRI",
 ]
 
 # Default strategy parameters — overridden by config["strategy_params"]
@@ -328,11 +329,15 @@ class MarketScanner:
             )
 
             # Two-tier filtering
+            # Minimum $1.00 floor — Alpaca bracket orders require
+            # take-profit >= entry + $0.01, which fails on sub-$1 stocks
+            # where ATR-based targets are fractions of a cent.
+            min_price = 1.0
             tier1: list[tuple[str, float, float]] = []
             tier2: list[tuple[str, float, float]] = []
             for sym, snap in snapshots.items():
                 price = snap.latest_trade.price if snap.latest_trade else None
-                if not price:
+                if not price or price < min_price:
                     continue
                 vol = snap.daily_bar.volume if snap.daily_bar else 0
                 if price <= whole_share_max:

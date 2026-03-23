@@ -223,9 +223,11 @@ class TestDiscoverSymbols:
 
     @pytest.fixture
     def discovery_config(self):
-        """Config with small budget for discovery testing."""
+        """Config with budget for discovery testing.
+        budget=100, max_position_pct=5% → whole_share_max=$5.00, fractional_max=$100.
+        """
         return {
-            "budget_usd": 10,
+            "budget_usd": 100,
             "max_position_pct": 5.0,
         }
 
@@ -282,11 +284,11 @@ class TestDiscoverSymbols:
 
     def test_filters_by_price_tier1(self, discovery_scanner):
         """Tier 1 stocks (whole-share affordable) are preferred."""
-        # Budget $10, max_position_pct 5% → whole_share_max = $0.50
+        # Budget $100, max_position_pct 5% → whole_share_max = $5.00, fractional_max = $100
         snapshots = {
-            "CHEAP": self._make_snapshot(0.30, 500_000),          # Tier 1: $0.30 <= $0.50
-            "MID": self._make_snapshot(5.00, 200_000),            # Tier 2: $5.00 <= $10
-            "EXPENSIVE": self._make_snapshot(150.00, 1_000_000),  # Too expensive
+            "CHEAP": self._make_snapshot(3.00, 500_000),          # Tier 1: $3.00 <= $5.00
+            "MID": self._make_snapshot(50.00, 200_000),           # Tier 2: $50.00 <= $100
+            "EXPENSIVE": self._make_snapshot(500.00, 1_000_000),  # Too expensive: > $100
         }
 
         with self._patch_screener(discovery_scanner, ["CHEAP", "MID", "EXPENSIVE"], snapshots):
@@ -300,11 +302,12 @@ class TestDiscoverSymbols:
         """Tier 1 stocks fill first, Tier 2 fills remaining slots."""
         candidates = [f"T1_{i}" for i in range(5)] + [f"T2_{i}" for i in range(15)]
 
+        # Tier 1: $1.50-$4.50 (under whole_share_max=$5), Tier 2: $10-$80 (under fractional_max=$100)
         snapshots = {}
         for i in range(5):
-            snapshots[f"T1_{i}"] = self._make_snapshot(0.10 + i * 0.08, 100_000 * (5 - i))
+            snapshots[f"T1_{i}"] = self._make_snapshot(1.50 + i * 0.75, 100_000 * (5 - i))
         for i in range(15):
-            snapshots[f"T2_{i}"] = self._make_snapshot(1.0 + i * 0.5, 50_000 * (15 - i))
+            snapshots[f"T2_{i}"] = self._make_snapshot(10.0 + i * 5.0, 50_000 * (15 - i))
 
         with self._patch_screener(discovery_scanner, candidates, snapshots):
             result = discovery_scanner.discover_symbols(max_symbols=7)
@@ -317,7 +320,7 @@ class TestDiscoverSymbols:
     def test_max_symbols_limit(self, discovery_scanner):
         """Result never exceeds max_symbols."""
         candidates = [f"S{i}" for i in range(50)]
-        snapshots = {f"S{i}": self._make_snapshot(0.20, 100_000) for i in range(50)}
+        snapshots = {f"S{i}": self._make_snapshot(2.00, 100_000) for i in range(50)}
 
         with self._patch_screener(discovery_scanner, candidates, snapshots):
             result = discovery_scanner.discover_symbols(max_symbols=5)

@@ -43,6 +43,27 @@ from scripts.strategies import STRATEGY_REGISTRY
 
 _shutdown_requested: bool = False
 
+# Aggressiveness level → confidence threshold mapping
+_AGGRESSIVENESS_THRESHOLDS: dict[str, float] = {
+    "conservative": 0.6,
+    "moderate": 0.45,
+    "aggressive": 0.3,
+}
+
+
+def _get_confidence_threshold(config: dict) -> float:
+    """Derive confidence threshold from config.
+
+    Checks in order:
+    1. Explicit confidence_threshold field
+    2. signal_aggressiveness field → mapped to threshold
+    3. Default: 0.45 (moderate)
+    """
+    if "confidence_threshold" in config:
+        return float(config["confidence_threshold"])
+    aggressiveness = config.get("signal_aggressiveness", "moderate")
+    return _AGGRESSIVENESS_THRESHOLDS.get(aggressiveness, 0.45)
+
 # Discovery cache — refreshed hourly, not every 60s scan cycle
 _discovered_watchlist: list[str] = []
 _discovery_timestamp: float = 0.0
@@ -221,7 +242,7 @@ def scan_and_trade(
                 strategy = strategy_class()
                 params = strategy_config.get("params", {})
                 signal = strategy.generate_signal(df, symbol, params)
-                threshold = config.get("confidence_threshold", 0.6)
+                threshold = _get_confidence_threshold(config)
 
                 if signal.action == "BUY" and signal.confidence >= threshold:
                     logger.info(
@@ -306,7 +327,7 @@ def get_analysis_context(scanner: MarketScanner, config: dict) -> dict:
         "current_price"}} for each valid symbol x strategy combination.
         Symbols with empty DataFrames are skipped.
     """
-    analyzer = ClaudeAnalyzer(config, confidence_threshold=config.get("confidence_threshold", 0.6))
+    analyzer = ClaudeAnalyzer(config, confidence_threshold=_get_confidence_threshold(config))
     watchlist = config.get("watchlist", [])
     context: dict = {}
 
