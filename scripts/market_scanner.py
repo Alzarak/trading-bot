@@ -329,15 +329,11 @@ class MarketScanner:
             )
 
             # Two-tier filtering
-            # Minimum $1.00 floor — Alpaca bracket orders require
-            # take-profit >= entry + $0.01, which fails on sub-$1 stocks
-            # where ATR-based targets are fractions of a cent.
-            min_price = 1.0
             tier1: list[tuple[str, float, float]] = []
             tier2: list[tuple[str, float, float]] = []
             for sym, snap in snapshots.items():
                 price = snap.latest_trade.price if snap.latest_trade else None
-                if not price or price < min_price:
+                if not price:
                     continue
                 vol = snap.daily_bar.volume if snap.daily_bar else 0
                 if price <= whole_share_max:

@@ -61,6 +61,9 @@ class OrderExecutor:
     # ATR-based price calculations
     # ------------------------------------------------------------------
 
+    # Alpaca requires stop/take-profit to differ from entry by at least $0.01
+    _MIN_PRICE_INCREMENT = 0.01
+
     def calculate_stop_price(
         self,
         entry_price: float,
@@ -72,6 +75,9 @@ class OrderExecutor:
         For buy (long) orders: stop is below entry by ATR * multiplier.
         For sell (short) orders: stop is above entry by ATR * multiplier.
 
+        Enforces a minimum distance of $0.01 from entry to satisfy
+        Alpaca's bracket order price increment rules.
+
         Args:
             entry_price: Expected entry price.
             atr: Average True Range at time of signal.
@@ -80,7 +86,7 @@ class OrderExecutor:
         Returns:
             Rounded stop price (2 decimal places).
         """
-        stop_distance = atr * self.atr_multiplier
+        stop_distance = max(atr * self.atr_multiplier, self._MIN_PRICE_INCREMENT)
         if side.lower() == "sell":
             return round(entry_price + stop_distance, 2)
         return round(entry_price - stop_distance, 2)
@@ -95,6 +101,9 @@ class OrderExecutor:
 
         Formula: entry_price + (ATR * multiplier * risk_reward_ratio)
 
+        Enforces a minimum distance of $0.01 from entry to satisfy
+        Alpaca's bracket order price increment rules.
+
         Args:
             entry_price: Expected entry price.
             atr: Average True Range at time of signal.
@@ -104,7 +113,8 @@ class OrderExecutor:
         Returns:
             Rounded take-profit price (2 decimal places).
         """
-        return round(entry_price + (atr * self.atr_multiplier * risk_reward_ratio), 2)
+        tp_distance = max(atr * self.atr_multiplier * risk_reward_ratio, self._MIN_PRICE_INCREMENT)
+        return round(entry_price + tp_distance, 2)
 
     # ------------------------------------------------------------------
     # Order type methods
