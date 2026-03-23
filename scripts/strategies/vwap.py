@@ -14,7 +14,7 @@ import pandas as pd
 from loguru import logger
 
 from scripts.strategies.base import BaseStrategy
-from scripts.types import Signal
+from scripts.models import Signal
 
 
 class VWAPStrategy(BaseStrategy):
@@ -121,22 +121,61 @@ class VWAPStrategy(BaseStrategy):
 
         in_trading_window = trading_start_hour <= hour < trading_end_hour
 
-        # BUY conditions (all must be true)
-        below_vwap_pct = (vwap - close) / vwap if vwap > 0 else 0.0
-        price_below_vwap = below_vwap_pct > (deviation_threshold_pct / 100)
-        rsi_weak = rsi < 40
+        # --- BUY scoring (weighted) ---
+        buy_score = 0.0
+        buy_reasons: list[str] = []
+        buy_conditions = 0
 
-        if price_below_vwap and rsi_weak and in_trading_window:
+        below_vwap_pct = (vwap - close) / vwap if vwap > 0 else 0.0
+
+        # Condition 1: Below VWAP (relaxed from 1.5% to 1.0%)
+        if below_vwap_pct > 0.01:
+            buy_score += 0.30
+            buy_conditions += 1
+            buy_reasons.append(f"price {below_vwap_pct * 100:.2f}% below VWAP ({vwap:.2f})")
+
+        # Bonus: deep below VWAP (original threshold)
+        if below_vwap_pct > (deviation_threshold_pct / 100):
+            buy_score += 0.10
+            buy_reasons.append(f"deep below VWAP (>{deviation_threshold_pct}%)")
+
+        # Condition 2: RSI weak (relaxed from < 40 to < 45)
+        if rsi < 45:
+            buy_score += 0.25
+            buy_conditions += 1
+            buy_reasons.append(f"RSI weak ({rsi:.1f} < 45)")
+
+        # Bonus: RSI very weak
+        if rsi < 35:
+            buy_score += 0.10
+            buy_reasons.append(f"RSI very weak ({rsi:.1f} < 35)")
+
+        # Condition 3: In trading window
+        if in_trading_window:
+            buy_score += 0.20
+            buy_conditions += 1
+            buy_reasons.append(f"in trading window ({hour}:xx ET)")
+
+        # Condition 4: Volume above average (optional)
+        if "volume" in df.columns and len(df) >= 20:
+            vol_avg = df["volume"].rolling(20).mean().iloc[-1]
+            if not _is_nan(vol_avg) and float(row["volume"]) > float(vol_avg):
+                buy_score += 0.15
+                buy_conditions += 1
+                buy_reasons.append("volume above average")
+
+        buy_score = min(buy_score, 1.0)
+
+        # 2-of-N gate: need at least 2 conditions to produce a BUY
+        if buy_conditions >= 2 and buy_score > 0:
             reasoning = (
-                f"BUY: price ({close:.2f}) is {below_vwap_pct * 100:.2f}% below "
-                f"VWAP ({vwap:.2f}) (threshold {deviation_threshold_pct}%), "
-                f"RSI weak ({rsi:.1f} < 40), "
-                f"time within window ({hour}:xx ET)"
+                "BUY: " + "; ".join(buy_reasons)
+                + f" [score={buy_score:.2f}, {buy_conditions} conditions]"
             )
             logger.info("vwap[{}]: {}", symbol, reasoning)
             return Signal(
                 action="BUY",
-                confidence=0.7,
+                confidence=buy_score,
                 symbol=symbol,
                 strategy="vwap",
                 atr=atr,
@@ -144,10 +183,11 @@ class VWAPStrategy(BaseStrategy):
                 reasoning=reasoning,
             )
 
-        # SELL condition: price returns to VWAP
+        # SELL condition: price returns to VWAP (binary — target reached)
         if close >= vwap:
             reasoning = (
-                f"SELL: price ({close:.2f}) returned to VWAP ({vwap:.2f}) — target reached"
+                f"SELL: price ({close:.2f}) returned to VWAP ({vwap:.2f})"
+                f" — target reached [score=0.70]"
             )
             logger.info("vwap[{}]: {}", symbol, reasoning)
             return Signal(
@@ -160,23 +200,24 @@ class VWAPStrategy(BaseStrategy):
                 reasoning=reasoning,
             )
 
-        # HOLD — explain which conditions weren't met
+        # --- HOLD with partial score for transparency ---
         reasons = []
-        if not price_below_vwap:
-            reasons.append(
-                f"price deviation {below_vwap_pct * 100:.2f}% < {deviation_threshold_pct}% threshold"
-            )
-        if not rsi_weak:
-            reasons.append(f"RSI not weak ({rsi:.1f} >= 40)")
+        if buy_conditions < 2:
+            reasons.append(f"only {buy_conditions} conditions met (need 2)")
         if not in_trading_window:
             reasons.append(
-                f"outside trading window (hour={hour}, window={trading_start_hour}-{trading_end_hour})"
+                f"outside trading window (hour={hour}, "
+                f"window={trading_start_hour}-{trading_end_hour})"
             )
-        reasoning = "HOLD: " + "; ".join(reasons) if reasons else "HOLD: conditions not met"
+        reasoning = (
+            f"HOLD: buy_score={buy_score:.2f} ({buy_conditions} conditions). "
+            + "; ".join(reasons) if reasons else
+            f"HOLD: buy_score={buy_score:.2f} ({buy_conditions} conditions)"
+        )
         logger.debug("vwap[{}]: {}", symbol, reasoning)
         return Signal(
             action="HOLD",
-            confidence=0.0,
+            confidence=buy_score,
             symbol=symbol,
             strategy="vwap",
             atr=atr,

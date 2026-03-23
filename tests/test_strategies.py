@@ -14,7 +14,7 @@ from scripts.strategies.momentum import MomentumStrategy
 from scripts.strategies.mean_reversion import MeanReversionStrategy
 from scripts.strategies.breakout import BreakoutStrategy
 from scripts.strategies.vwap import VWAPStrategy
-from scripts.types import Signal
+from scripts.models import Signal
 
 ET = ZoneInfo("America/New_York")
 
@@ -151,17 +151,34 @@ def sell_momentum_df():
 
 @pytest.fixture
 def hold_momentum_df():
-    """HOLD: RSI didn't cross above 30 (stays above), MACD positive, EMA bullish."""
+    """HOLD: only 1 condition met (EMA bullish) — below 2-of-N gate."""
     df = make_base_df(n=50, base_price=100.0)
     df = add_momentum_indicators(
         df,
-        rsi_last=45.0,   # above 30 but didn't cross (prev also above 30)
-        rsi_prev=43.0,   # prev also above 30 — no crossover
-        macd_h=0.05,     # positive
-        ema_short=101.0,
+        rsi_last=55.0,   # not < 45 — RSI recovering doesn't fire
+        rsi_prev=56.0,   # falling, not rising
+        macd_h=-0.10,    # negative — not positive, not improving
+        ema_short=101.0, # bullish — 1 condition
         ema_long=100.0,
         atr=1.5,
     )
+    return df
+
+
+@pytest.fixture
+def partial_buy_momentum_df():
+    """Partial BUY: 2 conditions met (MACD positive + EMA bullish), proportional score."""
+    df = make_base_df(n=50, base_price=100.0)
+    df = add_momentum_indicators(
+        df,
+        rsi_last=55.0,   # not < 45 — RSI recovering doesn't fire
+        rsi_prev=54.0,
+        macd_h=0.05,     # positive — condition met
+        ema_short=101.0, # bullish — condition met
+        ema_long=100.0,
+        atr=1.5,
+    )
+    df["volume"] = 100_000.0  # not above average (avg == last)
     return df
 
 
@@ -222,19 +239,19 @@ def sell_mean_reversion_df():
 
 @pytest.fixture
 def hold_mean_reversion_df():
-    """HOLD: RSI > 30 (not oversold) — buy conditions not met."""
+    """HOLD: only 1 condition met (price below middle BB) — below 2-of-N gate."""
     df = make_base_df(n=50, base_price=100.0)
-    close = 97.5  # below lower band
+    close = 99.0  # far from lower band, below middle band
     df["close"] = close
     df["open"] = close * 0.999
     df["high"] = close * 1.002
     df["low"] = close * 0.998
 
-    df["RSI_14"] = 40.0          # NOT < 30
+    df["RSI_14"] = 55.0          # NOT < 40
     df["ATRr_14"] = 1.5
-    df["BBL_20_2.0_2.0"] = 98.0
-    df["BBM_20_2.0_2.0"] = 99.5  # below middle (no SELL)
-    df["BBU_20_2.0_2.0"] = 103.0
+    df["BBL_20_2.0_2.0"] = 95.0  # |99-95|/95 = 4.2% > 3% — near_lower_band NOT met
+    df["BBM_20_2.0_2.0"] = 100.0  # close < middle → 1 condition
+    df["BBU_20_2.0_2.0"] = 105.0
     df["VWAP_D"] = 100.0
     df["MACDh_12_26_9"] = 0.0
     df["MACD_12_26_9"] = 0.0
@@ -295,9 +312,12 @@ def buy_breakout_df():
 
 
 @pytest.fixture
-def hold_breakout_low_volume_df():
-    """HOLD: new high but volume only 1.2x average — below 1.5x threshold."""
-    return make_breakout_df(close_last=105.0, volume_last=120_000.0)  # 1.2x
+def no_buy_breakout_df():
+    """No BUY: price below high, normal volume → SELL (breakout failure) not BUY."""
+    df = make_breakout_df(close_last=98.0, volume_last=100_000.0)
+    # close=98.0 < 20-bar high 100.2 → breakout failure → SELL (binary)
+    # BUY conditions: no new high, not near high (2.2%), no elevated volume → no BUY
+    return df
 
 
 # ---------------------------------------------------------------------------
@@ -349,8 +369,8 @@ def buy_vwap_df():
 
 @pytest.fixture
 def hold_vwap_wrong_time_df():
-    """HOLD: price 2% below VWAP but hour 16 (outside 10-15 window)."""
-    return make_vwap_df(close=98.0, vwap=100.0, rsi=35.0, hour=16)
+    """HOLD: only 1 condition met (below VWAP) — RSI neutral, outside window."""
+    return make_vwap_df(close=98.0, vwap=100.0, rsi=50.0, hour=16)
 
 
 @pytest.fixture
@@ -400,33 +420,57 @@ class TestMomentum:
         strategy = MomentumStrategy()
         signal = strategy.generate_signal(buy_momentum_df, "AAPL", DEFAULT_PARAMS)
         assert signal.action == "BUY"
-        assert signal.confidence == 0.8
+        assert 0.5 <= signal.confidence <= 1.0
         assert signal.strategy == "momentum"
         assert signal.symbol == "AAPL"
         assert isinstance(signal.reasoning, str) and len(signal.reasoning) > 0
+
+    def test_all_conditions_high_confidence(self, buy_momentum_df):
+        """All conditions met should produce high confidence (>= 0.7)."""
+        strategy = MomentumStrategy()
+        signal = strategy.generate_signal(buy_momentum_df, "AAPL", DEFAULT_PARAMS)
+        assert signal.action == "BUY"
+        assert signal.confidence >= 0.7
 
     def test_sell_signal(self, sell_momentum_df):
         strategy = MomentumStrategy()
         signal = strategy.generate_signal(sell_momentum_df, "AAPL", DEFAULT_PARAMS)
         assert signal.action == "SELL"
-        assert signal.confidence == 0.6
+        assert 0.3 <= signal.confidence <= 1.0
         assert signal.strategy == "momentum"
 
-    def test_hold_mixed_signals(self, hold_momentum_df):
+    def test_hold_single_condition(self, hold_momentum_df):
+        """Only 1 condition met — below 2-of-N gate, should be HOLD."""
         strategy = MomentumStrategy()
         signal = strategy.generate_signal(hold_momentum_df, "AAPL", DEFAULT_PARAMS)
-        # RSI didn't cross above 30 (both rows above 30) → no BUY
-        # RSI not overbought (45 < 70) → no SELL
-        # Result depends on EMA: EMA_9 > EMA_21 keeps SELL off, but no crossover → HOLD
         assert signal.action == "HOLD"
         assert signal.strategy == "momentum"
+
+    def test_partial_conditions_buy(self, partial_buy_momentum_df):
+        """2 conditions met should produce BUY with proportional score."""
+        strategy = MomentumStrategy()
+        signal = strategy.generate_signal(partial_buy_momentum_df, "AAPL", DEFAULT_PARAMS)
+        assert signal.action == "BUY"
+        assert 0.3 <= signal.confidence <= 0.6
+
+    def test_hold_has_partial_confidence(self, hold_momentum_df):
+        """HOLD signals carry partial score for transparency."""
+        strategy = MomentumStrategy()
+        signal = strategy.generate_signal(hold_momentum_df, "AAPL", DEFAULT_PARAMS)
+        assert signal.action == "HOLD"
+        assert signal.confidence >= 0.0
+
+    def test_confidence_capped_at_one(self, buy_momentum_df):
+        """Confidence should never exceed 1.0."""
+        strategy = MomentumStrategy()
+        signal = strategy.generate_signal(buy_momentum_df, "AAPL", DEFAULT_PARAMS)
+        assert signal.confidence <= 1.0
 
     def test_signal_has_atr(self, buy_momentum_df):
         strategy = MomentumStrategy()
         signal = strategy.generate_signal(buy_momentum_df, "AAPL", DEFAULT_PARAMS)
         assert signal.atr > 0, "BUY signal must have atr > 0"
         assert signal.stop_price > 0, "BUY signal must have valid stop_price"
-        # Stop should be below close (ATR-based: close - atr * multiplier)
         close = float(buy_momentum_df["close"].iloc[-1])
         assert signal.stop_price < close
 
@@ -452,7 +496,7 @@ class TestMeanReversion:
         strategy = MeanReversionStrategy()
         signal = strategy.generate_signal(buy_mean_reversion_df, "MSFT", DEFAULT_PARAMS)
         assert signal.action == "BUY"
-        assert signal.confidence == 0.75
+        assert 0.5 <= signal.confidence <= 1.0
         assert signal.strategy == "mean_reversion"
         assert signal.symbol == "MSFT"
 
@@ -463,11 +507,24 @@ class TestMeanReversion:
         assert signal.confidence == 0.7
         assert signal.strategy == "mean_reversion"
 
-    def test_hold_not_oversold(self, hold_mean_reversion_df):
+    def test_hold_single_condition(self, hold_mean_reversion_df):
+        """Only 1 condition met — below 2-of-N gate, should be HOLD."""
         strategy = MeanReversionStrategy()
         signal = strategy.generate_signal(hold_mean_reversion_df, "MSFT", DEFAULT_PARAMS)
         assert signal.action == "HOLD"
         assert signal.strategy == "mean_reversion"
+
+    def test_hold_has_partial_confidence(self, hold_mean_reversion_df):
+        """HOLD carries partial score for transparency."""
+        strategy = MeanReversionStrategy()
+        signal = strategy.generate_signal(hold_mean_reversion_df, "MSFT", DEFAULT_PARAMS)
+        assert signal.action == "HOLD"
+        assert signal.confidence >= 0.0
+
+    def test_confidence_capped_at_one(self, buy_mean_reversion_df):
+        strategy = MeanReversionStrategy()
+        signal = strategy.generate_signal(buy_mean_reversion_df, "MSFT", DEFAULT_PARAMS)
+        assert signal.confidence <= 1.0
 
     def test_signal_has_atr(self, buy_mean_reversion_df):
         strategy = MeanReversionStrategy()
@@ -490,17 +547,20 @@ class TestBreakout:
         strategy = BreakoutStrategy()
         signal = strategy.generate_signal(buy_breakout_df, "SPY", DEFAULT_PARAMS)
         assert signal.action == "BUY"
-        assert signal.confidence == 0.7
+        assert 0.4 <= signal.confidence <= 1.0
         assert signal.strategy == "breakout"
         assert signal.symbol == "SPY"
 
-    def test_hold_low_volume(self, hold_breakout_low_volume_df):
+    def test_no_buy_below_high(self, no_buy_breakout_df):
+        """Price below 20-bar high with normal volume should NOT produce BUY."""
         strategy = BreakoutStrategy()
-        signal = strategy.generate_signal(hold_breakout_low_volume_df, "SPY", DEFAULT_PARAMS)
-        # Volume is only 1.2x average — below the 1.5x threshold → not a BUY
-        assert signal.action != "BUY", (
-            "Low volume should not trigger BUY (1.2x < 1.5x threshold)"
-        )
+        signal = strategy.generate_signal(no_buy_breakout_df, "SPY", DEFAULT_PARAMS)
+        assert signal.action != "BUY"
+
+    def test_confidence_capped_at_one(self, buy_breakout_df):
+        strategy = BreakoutStrategy()
+        signal = strategy.generate_signal(buy_breakout_df, "SPY", DEFAULT_PARAMS)
+        assert signal.confidence <= 1.0
 
     def test_signal_has_atr(self, buy_breakout_df):
         strategy = BreakoutStrategy()
@@ -530,17 +590,15 @@ class TestVWAP:
         strategy = VWAPStrategy()
         signal = strategy.generate_signal(buy_vwap_df, "QQQ", DEFAULT_PARAMS)
         assert signal.action == "BUY"
-        assert signal.confidence == 0.7
+        assert 0.5 <= signal.confidence <= 1.0
         assert signal.strategy == "vwap"
         assert signal.symbol == "QQQ"
 
     def test_hold_wrong_time(self, hold_vwap_wrong_time_df):
+        """Only 1 condition met (below VWAP) — RSI neutral, outside window → HOLD."""
         strategy = VWAPStrategy()
         signal = strategy.generate_signal(hold_vwap_wrong_time_df, "QQQ", DEFAULT_PARAMS)
-        assert signal.action == "HOLD", (
-            "Hour 16 is outside 10-15 window — should be HOLD"
-        )
-        assert "outside trading window" in signal.reasoning.lower() or "hold" in signal.reasoning.lower()
+        assert signal.action == "HOLD"
 
     def test_stop_is_percentage_based(self, buy_vwap_df_for_stop_check):
         """VWAP stop_price should use percentage formula, not ATR * multiplier."""

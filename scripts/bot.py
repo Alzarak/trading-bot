@@ -208,11 +208,12 @@ def scan_and_trade(
                 strategy = strategy_class()
                 params = strategy_config.get("params", {})
                 signal = strategy.generate_signal(df, symbol, params)
+                threshold = config.get("confidence_threshold", 0.6)
 
-                if signal.action == "BUY":
+                if signal.action == "BUY" and signal.confidence >= threshold:
                     logger.info(
-                        "BUY signal: {} from {} (confidence={:.2f})",
-                        symbol, strategy_name, signal.confidence,
+                        "BUY signal: {} from {} (confidence={:.2f}, threshold={:.2f})",
+                        symbol, strategy_name, signal.confidence, threshold,
                     )
                     order = executor.execute_signal(signal, current_price)
                     if order is not None:
@@ -234,10 +235,10 @@ def scan_and_trade(
                             order_type="bracket",
                         )
 
-                elif signal.action == "SELL":
+                elif signal.action == "SELL" and signal.confidence >= threshold:
                     logger.info(
-                        "SELL signal: {} from {} (confidence={:.2f})",
-                        symbol, strategy_name, signal.confidence,
+                        "SELL signal: {} from {} (confidence={:.2f}, threshold={:.2f})",
+                        symbol, strategy_name, signal.confidence, threshold,
                     )
                     order = executor.execute_signal(signal, current_price)
                     if order is not None:
@@ -292,7 +293,7 @@ def get_analysis_context(scanner: MarketScanner, config: dict) -> dict:
         "current_price"}} for each valid symbol x strategy combination.
         Symbols with empty DataFrames are skipped.
     """
-    analyzer = ClaudeAnalyzer(config)
+    analyzer = ClaudeAnalyzer(config, confidence_threshold=config.get("confidence_threshold", 0.6))
     watchlist = config.get("watchlist", [])
     context: dict = {}
 

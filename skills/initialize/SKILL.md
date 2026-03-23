@@ -168,7 +168,28 @@ Read `~/.claude/trading-bot/references/trading-strategies.md` for strategy descr
 
 Build strategy objects with default params from the reference file. Assign equal weights.
 
-## Step 7 — Autonomy Mode
+## Step 7 — Signal Aggressiveness
+
+This controls how many indicator conditions must align before the bot considers a setup worth trading. Higher aggressiveness means the bot trades more often on partial signals. Lower means it waits for stronger confirmation. This is separate from risk tolerance — aggressiveness controls signal sensitivity, not position size or loss limits.
+
+**Beginner:** Auto-set `signal_aggressiveness = "moderate"` and `confidence_threshold = 0.45`. Tell the user: "Signal sensitivity set to moderate — the bot will trade on reasonable setups without being too picky or too loose."
+
+**Intermediate/Expert:** Use AskUserQuestion to ask:
+
+> "How sensitive should the bot be to trade signals? This controls how many indicator conditions must align before the bot acts. Risk limits (position size, loss limits) are unchanged.
+>
+> 1. Conservative — waits for strong confirmation (most conditions aligned). Fewer trades, higher quality.
+> 2. Moderate — trades on reasonable setups. Good balance of frequency and quality. (recommended)
+> 3. Aggressive — trades on partial signals. More trades, but some may be marginal."
+
+Store as `signal_aggressiveness`: `"conservative"`, `"moderate"`, or `"aggressive"`.
+
+Derive `confidence_threshold`:
+- conservative: `0.6`
+- moderate: `0.45`
+- aggressive: `0.3`
+
+## Step 8 — Autonomy Mode
 
 This controls whether the bot uses fixed parameters or lets Claude adjust strategy parameters (position sizing, indicator thresholds) within the risk bounds configured above.
 
@@ -183,7 +204,7 @@ This controls whether the bot uses fixed parameters or lets Claude adjust strate
 
 Store as `autonomy_mode`: `"fixed_params"` or `"claude_adaptive"`.
 
-## Step 8 — Market Hours and Stock Discovery
+## Step 9 — Market Hours and Stock Discovery
 
 Default `market_hours_only = true`. Experts can override.
 
@@ -215,7 +236,7 @@ Compute derived values from `risk_tolerance`:
 
 Set `autonomy_level` from `involvement_level`: `hands_off`→`full_auto`, `notify`→`notify_only`, `approve`→`approval_required`.
 
-Write the full config to `./trading-bot/config.json` using Bash heredoc (env vars must be shell-expanded). Include all fields: `experience_level`, `involvement_level`, `autonomy_level`, `risk_tolerance`, `max_position_pct`, `max_daily_loss_pct`, `budget_usd`, `paper_trading`, `use_mcp`, `strategies`, `autonomy_mode`, `discovery_mode`, `watchlist`, `market_hours_only`.
+Write the full config to `./trading-bot/config.json` using Bash heredoc (env vars must be shell-expanded). Include all fields: `experience_level`, `involvement_level`, `autonomy_level`, `risk_tolerance`, `max_position_pct`, `max_daily_loss_pct`, `budget_usd`, `paper_trading`, `use_mcp`, `strategies`, `signal_aggressiveness`, `confidence_threshold`, `autonomy_mode`, `discovery_mode`, `watchlist`, `market_hours_only`.
 
 **Never store API keys in config.json — keys go in .env only.**
 

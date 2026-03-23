@@ -140,6 +140,26 @@ After 5 attempts: log failure, skip trade, continue loop
 
 ---
 
+## Signal Aggressiveness
+
+**Purpose:** Control signal sensitivity — how many weighted conditions must align before the bot considers a setup tradeable.
+
+**Important:** Aggressiveness controls ONLY signal sensitivity. It does NOT change risk exposure — position sizing, daily loss limits, circuit breaker, PDT, and stop-loss rules remain unchanged regardless of aggressiveness level.
+
+| Level | `confidence_threshold` | Behavior |
+|-------|----------------------|----------|
+| conservative | 0.6 | Most conditions must align — fewer trades, higher quality |
+| moderate | 0.45 | Trades on reasonable setups — balanced frequency and quality |
+| aggressive | 0.3 | Trades on partial signals — more trades, some marginal |
+
+**Enforcement:** Applied in `bot.py` `scan_and_trade()` (strategy pipeline) and `ClaudeAnalyzer.parse_response()` (Claude pipeline). Both use the same `confidence_threshold` from `config.json`.
+
+**Config fields:**
+- `signal_aggressiveness`: `"conservative"` | `"moderate"` | `"aggressive"`
+- `confidence_threshold`: `0.6` | `0.45` | `0.3`
+
+---
+
 ## Autonomy Modes
 
 **Purpose:** Control how much discretion Claude has vs deterministic config values.

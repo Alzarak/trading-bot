@@ -11,7 +11,7 @@ import pandas as pd
 from loguru import logger
 
 from scripts.strategies.base import BaseStrategy
-from scripts.types import Signal
+from scripts.models import Signal
 
 
 class BreakoutStrategy(BaseStrategy):
@@ -117,19 +117,64 @@ class BreakoutStrategy(BaseStrategy):
         current_20bar_high = float(rolling_high_max.iloc[-1])
         volume = float(row["volume"])
 
-        # BUY conditions (all must be true)
-        new_high = close > prior_20bar_high
-        high_volume = volume > float(vol_avg) * vol_multiplier
+        # --- BUY scoring (weighted) ---
+        buy_score = 0.0
+        buy_reasons: list[str] = []
+        buy_conditions = 0
 
-        if new_high and high_volume:
+        # Condition 1: New 20-bar high (or near high for partial credit)
+        if close > prior_20bar_high:
+            buy_score += 0.35
+            buy_conditions += 1
+            buy_reasons.append(f"price ({close:.2f}) breaks 20-bar high ({prior_20bar_high:.2f})")
+        elif prior_20bar_high > 0 and (prior_20bar_high - close) / prior_20bar_high <= 0.01:
+            buy_score += 0.15
+            buy_conditions += 1
+            buy_reasons.append(f"price ({close:.2f}) within 1% of 20-bar high ({prior_20bar_high:.2f})")
+
+        # Condition 2: Volume confirmation (strict or partial credit)
+        if volume > float(vol_avg) * vol_multiplier:
+            buy_score += 0.25
+            buy_conditions += 1
+            buy_reasons.append(
+                f"volume ({volume:.0f}) > {vol_multiplier}x avg ({float(vol_avg):.0f})"
+            )
+        elif volume > float(vol_avg) * 1.2:
+            buy_score += 0.10
+            buy_conditions += 1
+            buy_reasons.append(f"volume elevated ({volume:.0f}) > 1.2x avg ({float(vol_avg):.0f})")
+
+        # Condition 3: ATR expanding (increasing volatility at breakout)
+        prev_atr = float(df[atr_col].iloc[-2]) if not _is_nan(df[atr_col].iloc[-2]) else atr
+        if atr > prev_atr:
+            buy_score += 0.15
+            buy_conditions += 1
+            buy_reasons.append(f"ATR expanding ({prev_atr:.4f}->{atr:.4f})")
+
+        # Condition 4: MACD positive (trend confirmation, optional column)
+        macd_h_col = (
+            f"MACDh_{params.get('macd_fast', 12)}_"
+            f"{params.get('macd_slow', 26)}_"
+            f"{params.get('macd_signal', 9)}"
+        )
+        if macd_h_col in df.columns and not _is_nan(row.get(macd_h_col)):
+            if float(row[macd_h_col]) > 0:
+                buy_score += 0.10
+                buy_conditions += 1
+                buy_reasons.append(f"MACD histogram positive ({float(row[macd_h_col]):.4f})")
+
+        buy_score = min(buy_score, 1.0)
+
+        # 2-of-N gate: need at least 2 conditions to produce a BUY
+        if buy_conditions >= 2 and buy_score > 0:
             reasoning = (
-                f"BUY: price ({close:.2f}) breaks 20-bar high ({prior_20bar_high:.2f}), "
-                f"volume ({volume:.0f}) > {vol_multiplier}x 20-bar avg ({float(vol_avg):.0f})"
+                "BUY: " + "; ".join(buy_reasons)
+                + f" [score={buy_score:.2f}, {buy_conditions} conditions]"
             )
             logger.info("breakout[{}]: {}", symbol, reasoning)
             return Signal(
                 action="BUY",
-                confidence=0.7,
+                confidence=buy_score,
                 symbol=symbol,
                 strategy="breakout",
                 atr=atr,
@@ -137,13 +182,11 @@ class BreakoutStrategy(BaseStrategy):
                 reasoning=reasoning,
             )
 
-        # SELL condition: price falls below the current 20-bar rolling high (breakout failure)
+        # SELL condition: breakout failure (binary — structural signal)
         if close < current_20bar_high and not _is_nan(current_20bar_high):
-            # Only SELL if price had previously broken out (it's below the rolling high)
-            # and volume is falling — acts as a failed continuation signal
             reasoning = (
-                f"SELL: price ({close:.2f}) below 20-bar rolling high ({current_20bar_high:.2f}) "
-                f"— breakout failure"
+                f"SELL: price ({close:.2f}) below 20-bar rolling high ({current_20bar_high:.2f})"
+                f" — breakout failure [score=0.60]"
             )
             logger.info("breakout[{}]: {}", symbol, reasoning)
             return Signal(
@@ -156,19 +199,16 @@ class BreakoutStrategy(BaseStrategy):
                 reasoning=reasoning,
             )
 
-        # HOLD
-        reasons = []
-        if not new_high:
-            reasons.append(f"no new 20-bar high (close {close:.2f} <= prior high {prior_20bar_high:.2f})")
-        if not high_volume:
-            reasons.append(
-                f"volume ({volume:.0f}) < {vol_multiplier}x avg ({float(vol_avg) * vol_multiplier:.0f})"
-            )
-        reasoning = "HOLD: " + "; ".join(reasons) if reasons else "HOLD: conditions not met"
+        # --- HOLD with partial score for transparency ---
+        reasoning = (
+            f"HOLD: buy_score={buy_score:.2f} ({buy_conditions} conditions). "
+            f"close={close:.2f}, 20-bar high={prior_20bar_high:.2f}, "
+            f"volume={volume:.0f}, vol_avg={float(vol_avg):.0f}"
+        )
         logger.debug("breakout[{}]: {}", symbol, reasoning)
         return Signal(
             action="HOLD",
-            confidence=0.0,
+            confidence=buy_score,
             symbol=symbol,
             strategy="breakout",
             atr=atr,

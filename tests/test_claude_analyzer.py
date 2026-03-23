@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import pytest
 
-from scripts.types import ClaudeRecommendation, Signal
+from scripts.models import ClaudeRecommendation, Signal
 from scripts.claude_analyzer import ClaudeAnalyzer
 
 ET = ZoneInfo("America/New_York")
@@ -126,6 +126,20 @@ def test_build_analysis_prompt_analyst_only_instruction(analyzer, sample_df, ind
     """Prompt must contain the analyst-only safety instruction."""
     prompt = analyzer.build_analysis_prompt("AAPL", sample_df, "momentum", indicator_columns)
     assert "You are an analyst only" in prompt
+
+
+def test_build_analysis_prompt_includes_threshold(analyzer, sample_df, indicator_columns):
+    """Prompt must include the confidence threshold for Claude calibration."""
+    prompt = analyzer.build_analysis_prompt("AAPL", sample_df, "momentum", indicator_columns)
+    assert "0.6" in prompt  # default threshold
+    assert "confidence threshold" in prompt.lower()
+
+
+def test_build_analysis_prompt_custom_threshold(sample_config_dict, sample_df, indicator_columns):
+    """Prompt with custom threshold should include that threshold value."""
+    analyzer = ClaudeAnalyzer(config=sample_config_dict, confidence_threshold=0.45)
+    prompt = analyzer.build_analysis_prompt("AAPL", sample_df, "momentum", indicator_columns)
+    assert "0.45" in prompt
 
 
 def test_build_analysis_prompt_indicator_values_present(analyzer, sample_df, indicator_columns):

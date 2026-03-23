@@ -251,7 +251,7 @@ class TestScanAndTrade:
         """scan_and_trade executes BUY signal and logs trade."""
         import pandas as pd
         from scripts.bot import scan_and_trade
-        from scripts.types import Signal
+        from scripts.models import Signal
 
         # Mock scanner returns minimal DataFrame
         df = pd.DataFrame({
@@ -308,7 +308,7 @@ class TestScanAndTrade:
         """scan_and_trade does not execute HOLD signals."""
         import pandas as pd
         from scripts.bot import scan_and_trade
-        from scripts.types import Signal
+        from scripts.models import Signal
 
         df = pd.DataFrame({
             "close": [150.0],
@@ -343,3 +343,102 @@ class TestScanAndTrade:
             )
 
         mock_executor.execute_signal.assert_not_called()
+
+    def test_buy_below_threshold_not_executed(
+        self,
+        mock_scanner,
+        mock_executor,
+        mock_tracker,
+        mock_state_store,
+    ):
+        """BUY signal with confidence below threshold should NOT execute."""
+        import pandas as pd
+        from scripts.bot import scan_and_trade
+        from scripts.models import Signal
+
+        df = pd.DataFrame({
+            "close": [150.0],
+            "open": [148.0], "high": [151.0], "low": [147.0], "volume": [1000],
+        })
+        mock_scanner.is_market_open.return_value = True
+        mock_scanner.scan.return_value = df
+
+        weak_buy = Signal(
+            action="BUY",
+            confidence=0.4,
+            symbol="AAPL",
+            strategy="momentum",
+            atr=1.5,
+            stop_price=148.5,
+            reasoning="Weak signal",
+        )
+
+        mock_strategy_instance = MagicMock()
+        mock_strategy_instance.generate_signal.return_value = weak_buy
+        mock_strategy_class = MagicMock(return_value=mock_strategy_instance)
+
+        config = {
+            "watchlist": ["AAPL"],
+            "strategies": [{"name": "test_strategy", "params": {}}],
+            "confidence_threshold": 0.6,
+        }
+
+        with patch("scripts.bot.STRATEGY_REGISTRY", {"test_strategy": mock_strategy_class}):
+            scan_and_trade(
+                mock_scanner, config["strategies"], mock_executor, mock_tracker,
+                mock_state_store, config,
+            )
+
+        mock_executor.execute_signal.assert_not_called()
+
+    def test_buy_above_threshold_executed(
+        self,
+        mock_scanner,
+        mock_executor,
+        mock_tracker,
+        mock_state_store,
+    ):
+        """BUY signal with confidence above threshold should execute."""
+        import pandas as pd
+        from scripts.bot import scan_and_trade
+        from scripts.models import Signal
+
+        df = pd.DataFrame({
+            "close": [150.0],
+            "open": [148.0], "high": [151.0], "low": [147.0], "volume": [1000],
+        })
+        mock_scanner.is_market_open.return_value = True
+        mock_scanner.scan.return_value = df
+
+        buy_signal = Signal(
+            action="BUY",
+            confidence=0.5,
+            symbol="AAPL",
+            strategy="momentum",
+            atr=1.5,
+            stop_price=148.5,
+            reasoning="Moderate signal",
+        )
+
+        mock_order = MagicMock()
+        mock_order.qty = 10
+        mock_executor.execute_signal.return_value = mock_order
+        mock_state_store.get_position.return_value = None
+
+        mock_strategy_instance = MagicMock()
+        mock_strategy_instance.generate_signal.return_value = buy_signal
+        mock_strategy_class = MagicMock(return_value=mock_strategy_instance)
+
+        config = {
+            "watchlist": ["AAPL"],
+            "strategies": [{"name": "test_strategy", "params": {}}],
+            "confidence_threshold": 0.45,
+        }
+
+        with patch("scripts.bot.STRATEGY_REGISTRY", {"test_strategy": mock_strategy_class}):
+            scan_and_trade(
+                mock_scanner, config["strategies"], mock_executor, mock_tracker,
+                mock_state_store, config,
+            )
+
+        mock_executor.execute_signal.assert_called_once()

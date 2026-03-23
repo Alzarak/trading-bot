@@ -11,7 +11,7 @@ import pandas as pd
 from loguru import logger
 
 from scripts.strategies.base import BaseStrategy
-from scripts.types import Signal
+from scripts.models import Signal
 
 
 class MeanReversionStrategy(BaseStrategy):
@@ -109,21 +109,60 @@ class MeanReversionStrategy(BaseStrategy):
         bb_middle = float(row[bb_middle_col])
         rsi = float(row[rsi_col])
 
-        # BUY conditions (all must be true)
-        at_or_below_lower_band = close <= bb_lower
-        rsi_oversold = rsi < 30
-        within_2pct_of_lower = abs(close - bb_lower) / bb_lower <= 0.02
+        # --- BUY scoring (weighted) ---
+        buy_score = 0.0
+        buy_reasons: list[str] = []
+        buy_conditions = 0
 
-        if at_or_below_lower_band and rsi_oversold and within_2pct_of_lower:
+        # Condition 1: Near lower band (relaxed from "at or below" to within 3%)
+        pct_from_lower = abs(close - bb_lower) / bb_lower if bb_lower > 0 else 1.0
+        if pct_from_lower <= 0.03:
+            buy_score += 0.30
+            buy_conditions += 1
+            buy_reasons.append(f"price within 3% of lower BB ({pct_from_lower * 100:.2f}%)")
+
+        # Bonus: actually at or below lower band
+        if close <= bb_lower:
+            buy_score += 0.10
+            buy_reasons.append(f"price at/below lower BB ({close:.2f} <= {bb_lower:.2f})")
+
+        # Condition 2: RSI weak (relaxed from < 30 to < 40)
+        if rsi < 40:
+            buy_score += 0.25
+            buy_conditions += 1
+            buy_reasons.append(f"RSI weak ({rsi:.1f} < 40)")
+
+        # Bonus: RSI truly oversold
+        if rsi < 30:
+            buy_score += 0.10
+            buy_reasons.append(f"RSI oversold ({rsi:.1f} < 30)")
+
+        # Condition 3: Price below middle band
+        if close < bb_middle:
+            buy_score += 0.25
+            buy_conditions += 1
+            buy_reasons.append(f"price below middle BB ({close:.2f} < {bb_middle:.2f})")
+
+        # Condition 4: Volume declining (sellers exhausted, optional)
+        if "volume" in df.columns and len(df) >= 20:
+            vol_avg = df["volume"].rolling(20).mean().iloc[-1]
+            if not _is_nan(vol_avg) and float(row["volume"]) < float(vol_avg):
+                buy_score += 0.10
+                buy_conditions += 1
+                buy_reasons.append("volume declining (sellers may be exhausted)")
+
+        buy_score = min(buy_score, 1.0)
+
+        # 2-of-N gate: need at least 2 conditions to produce a BUY
+        if buy_conditions >= 2 and buy_score > 0:
             reasoning = (
-                f"BUY: price ({close:.2f}) at/below lower BB ({bb_lower:.2f}), "
-                f"RSI oversold ({rsi:.1f} < 30), "
-                f"within 2% of lower band ({abs(close - bb_lower) / bb_lower * 100:.2f}%)"
+                "BUY: " + "; ".join(buy_reasons)
+                + f" [score={buy_score:.2f}, {buy_conditions} conditions]"
             )
             logger.info("mean_reversion[{}]: {}", symbol, reasoning)
             return Signal(
                 action="BUY",
-                confidence=0.75,
+                confidence=buy_score,
                 symbol=symbol,
                 strategy="mean_reversion",
                 atr=atr,
@@ -131,10 +170,11 @@ class MeanReversionStrategy(BaseStrategy):
                 reasoning=reasoning,
             )
 
-        # SELL condition: price returns to middle band
+        # SELL condition: price returns to middle band (binary — target reached)
         if close >= bb_middle:
             reasoning = (
                 f"SELL: price ({close:.2f}) returned to middle BB / mean ({bb_middle:.2f})"
+                f" [score=0.70]"
             )
             logger.info("mean_reversion[{}]: {}", symbol, reasoning)
             return Signal(
@@ -147,21 +187,16 @@ class MeanReversionStrategy(BaseStrategy):
                 reasoning=reasoning,
             )
 
-        # HOLD
-        reasons = []
-        if not at_or_below_lower_band:
-            reasons.append(f"price ({close:.2f}) above lower BB ({bb_lower:.2f})")
-        if not rsi_oversold:
-            reasons.append(f"RSI not oversold ({rsi:.1f} >= 30)")
-        if not within_2pct_of_lower:
-            reasons.append(
-                f"price too far from lower band ({abs(close - bb_lower) / bb_lower * 100:.2f}% > 2%)"
-            )
-        reasoning = "HOLD: " + "; ".join(reasons) if reasons else "HOLD: conditions not met"
+        # --- HOLD with partial score for transparency ---
+        reasoning = (
+            f"HOLD: buy_score={buy_score:.2f} ({buy_conditions} conditions). "
+            f"RSI={rsi:.1f}, close={close:.2f}, "
+            f"lower_BB={bb_lower:.2f}, middle_BB={bb_middle:.2f}"
+        )
         logger.debug("mean_reversion[{}]: {}", symbol, reasoning)
         return Signal(
             action="HOLD",
-            confidence=0.0,
+            confidence=buy_score,
             symbol=symbol,
             strategy="mean_reversion",
             atr=atr,

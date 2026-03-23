@@ -11,7 +11,7 @@ import pandas as pd
 from loguru import logger
 
 from scripts.strategies.base import BaseStrategy
-from scripts.types import Signal
+from scripts.models import Signal
 
 
 class MomentumStrategy(BaseStrategy):
@@ -112,29 +112,71 @@ class MomentumStrategy(BaseStrategy):
         close = float(row["close"])
         stop_price = round(close - (atr * atr_multiplier), 2)
 
+        # Extract indicator values as local floats
+        rsi = float(row[rsi_col])
+        prev_rsi = float(prev[rsi_col])
+        macd_h = float(row[macd_h_col])
+        prev_macd_h = float(prev[macd_h_col]) if not _is_nan(prev[macd_h_col]) else macd_h
+        ema_s = float(row[ema_short_col])
+        ema_l = float(row[ema_long_col])
+
         # Volume above 20-bar rolling average
         vol_avg = df["volume"].rolling(20).mean().iloc[-1]
         high_volume = bool(row["volume"] > vol_avg) if not _is_nan(vol_avg) else False
 
-        # BUY conditions (all must be true)
-        rsi_cross_above_30 = float(row[rsi_col]) > 30 and float(prev[rsi_col]) <= 30
-        macd_h_positive = float(row[macd_h_col]) > 0
-        ema_bullish = float(row[ema_short_col]) > float(row[ema_long_col])
+        # --- BUY scoring (weighted) ---
+        buy_score = 0.0
+        buy_reasons: list[str] = []
+        buy_conditions = 0
 
-        buy_signal = rsi_cross_above_30 and macd_h_positive and ema_bullish and high_volume
+        # Condition 1: RSI recovering (relaxed from strict cross-above-30)
+        if rsi < 45 and rsi > prev_rsi:
+            buy_score += 0.25
+            buy_conditions += 1
+            buy_reasons.append(f"RSI recovering ({rsi:.1f}, rising from {prev_rsi:.1f})")
 
-        if buy_signal:
+        # Bonus: classic RSI oversold bounce
+        if rsi > 30 and prev_rsi <= 30:
+            buy_score += 0.10
+            buy_reasons.append(f"RSI crossed above 30 ({prev_rsi:.1f}->{rsi:.1f})")
+
+        # Condition 2: MACD histogram positive (or improving)
+        if macd_h > 0:
+            buy_score += 0.25
+            buy_conditions += 1
+            buy_reasons.append(f"MACD histogram positive ({macd_h:.4f})")
+        elif macd_h > prev_macd_h:
+            buy_score += 0.10
+            buy_conditions += 1
+            buy_reasons.append(f"MACD histogram improving ({prev_macd_h:.4f}->{macd_h:.4f})")
+
+        # Condition 3: EMA bullish
+        if ema_s > ema_l:
+            buy_score += 0.25
+            buy_conditions += 1
+            buy_reasons.append(
+                f"EMA{params.get('ema_short', 9)} ({ema_s:.2f}) > "
+                f"EMA{params.get('ema_long', 21)} ({ema_l:.2f})"
+            )
+
+        # Condition 4: Volume above average
+        if high_volume:
+            buy_score += 0.15
+            buy_conditions += 1
+            buy_reasons.append("volume above 20-bar avg")
+
+        buy_score = min(buy_score, 1.0)
+
+        # 2-of-N gate: need at least 2 conditions to produce a BUY
+        if buy_conditions >= 2 and buy_score > 0:
             reasoning = (
-                f"BUY: RSI crossed above 30 ({float(prev[rsi_col]):.1f} -> {float(row[rsi_col]):.1f}), "
-                f"MACD histogram positive ({float(row[macd_h_col]):.4f}), "
-                f"EMA{params.get('ema_short', 9)} ({float(row[ema_short_col]):.2f}) > "
-                f"EMA{params.get('ema_long', 21)} ({float(row[ema_long_col]):.2f}), "
-                f"volume above 20-bar avg"
+                "BUY: " + "; ".join(buy_reasons)
+                + f" [score={buy_score:.2f}, {buy_conditions} conditions]"
             )
             logger.info("momentum[{}]: {}", symbol, reasoning)
             return Signal(
                 action="BUY",
-                confidence=0.8,
+                confidence=buy_score,
                 symbol=symbol,
                 strategy="momentum",
                 atr=atr,
@@ -142,29 +184,38 @@ class MomentumStrategy(BaseStrategy):
                 reasoning=reasoning,
             )
 
-        # SELL conditions (any is sufficient)
-        rsi_overbought = float(row[rsi_col]) > 70
-        macd_h_negative = float(row[macd_h_col]) < 0
-        ema_bearish = float(row[ema_short_col]) < float(row[ema_long_col])
+        # --- SELL scoring (weighted, 2-of-3 gate) ---
+        sell_score = 0.0
+        sell_reasons: list[str] = []
+        sell_conditions = 0
 
-        sell_signal = (rsi_overbought or macd_h_negative) or ema_bearish
+        if rsi > 70:
+            sell_score += 0.35
+            sell_conditions += 1
+            sell_reasons.append(f"RSI overbought ({rsi:.1f})")
+        if macd_h < 0:
+            sell_score += 0.35
+            sell_conditions += 1
+            sell_reasons.append(f"MACD histogram negative ({macd_h:.4f})")
+        if ema_s < ema_l:
+            sell_score += 0.30
+            sell_conditions += 1
+            sell_reasons.append(
+                f"EMA{params.get('ema_short', 9)} ({ema_s:.2f}) < "
+                f"EMA{params.get('ema_long', 21)} ({ema_l:.2f})"
+            )
 
-        if sell_signal:
-            reasons = []
-            if rsi_overbought:
-                reasons.append(f"RSI overbought ({float(row[rsi_col]):.1f} > 70)")
-            if macd_h_negative:
-                reasons.append(f"MACD histogram negative ({float(row[macd_h_col]):.4f})")
-            if ema_bearish:
-                reasons.append(
-                    f"EMA{params.get('ema_short', 9)} ({float(row[ema_short_col]):.2f}) < "
-                    f"EMA{params.get('ema_long', 21)} ({float(row[ema_long_col]):.2f})"
-                )
-            reasoning = "SELL: " + "; ".join(reasons)
+        sell_score = min(sell_score, 1.0)
+
+        if sell_conditions >= 2 and sell_score > 0:
+            reasoning = (
+                "SELL: " + "; ".join(sell_reasons)
+                + f" [score={sell_score:.2f}]"
+            )
             logger.info("momentum[{}]: {}", symbol, reasoning)
             return Signal(
                 action="SELL",
-                confidence=0.6,
+                confidence=sell_score,
                 symbol=symbol,
                 strategy="momentum",
                 atr=atr,
@@ -172,18 +223,17 @@ class MomentumStrategy(BaseStrategy):
                 reasoning=reasoning,
             )
 
-        # HOLD — conditions not met
+        # --- HOLD with partial score for transparency ---
         reasoning = (
-            f"HOLD: RSI={float(row[rsi_col]):.1f}, "
-            f"MACDh={float(row[macd_h_col]):.4f}, "
-            f"EMA{params.get('ema_short', 9)}={float(row[ema_short_col]):.2f}, "
-            f"EMA{params.get('ema_long', 21)}={float(row[ema_long_col]):.2f}, "
-            f"high_volume={high_volume}"
+            f"HOLD: buy_score={buy_score:.2f} ({buy_conditions} conditions), "
+            f"sell_score={sell_score:.2f} ({sell_conditions} conditions). "
+            f"RSI={rsi:.1f}, MACDh={macd_h:.4f}, "
+            f"EMA_s={ema_s:.2f}, EMA_l={ema_l:.2f}, high_volume={high_volume}"
         )
         logger.debug("momentum[{}]: {}", symbol, reasoning)
         return Signal(
             action="HOLD",
-            confidence=0.0,
+            confidence=buy_score,
             symbol=symbol,
             strategy="momentum",
             atr=atr,

@@ -17,7 +17,7 @@ from typing import Any
 import pandas as pd
 from loguru import logger
 
-from scripts.types import ClaudeRecommendation
+from scripts.models import ClaudeRecommendation
 
 # Required fields that every Claude JSON response must contain
 _REQUIRED_FIELDS = frozenset(
@@ -153,6 +153,12 @@ Return a single JSON object with this exact schema:
 - `stop_price` for BUY: entry_price - (atr * 2.0). For SELL: entry_price + (atr * 2.0). For HOLD: 0.0.
 - You are an analyst only. Return a recommendation. Do NOT execute trades.
 - You must NEVER call Alpaca order APIs directly. All recommendations route through the Python risk manager.
+
+## Calibration
+
+Minimum confidence threshold for execution: {self.confidence_threshold}
+Only recommend BUY/SELL if your confidence meets this threshold.
+Scores below this threshold will be filtered out automatically.
 """
         return prompt
 
