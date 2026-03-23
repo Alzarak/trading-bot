@@ -211,3 +211,115 @@ class TestGetIndicatorColumns:
         assert cols["bb_lower"] == "BBL_10_1.5_1.5"
         assert cols["bb_middle"] == "BBM_10_1.5_1.5"
         assert cols["bb_upper"] == "BBU_10_1.5_1.5"
+
+
+# ---------------------------------------------------------------------------
+# TestDiscoverSymbols
+# ---------------------------------------------------------------------------
+
+
+class TestDiscoverSymbols:
+    """Test budget-aware symbol discovery with mocked Alpaca APIs."""
+
+    @pytest.fixture
+    def discovery_config(self):
+        """Config with small budget for discovery testing."""
+        return {
+            "budget_usd": 10,
+            "max_position_pct": 5.0,
+        }
+
+    @pytest.fixture
+    def discovery_scanner(self, discovery_config):
+        from scripts.market_scanner import MarketScanner
+        trading_client = MagicMock()
+        data_client = MagicMock()
+        data_client._api_key = "test_key"
+        data_client._secret_key = "test_secret"
+        return MarketScanner(trading_client, data_client, discovery_config)
+
+    def _make_snapshot(self, price, volume=100_000):
+        """Create a mock snapshot with given price and volume."""
+        snap = MagicMock()
+        snap.latest_trade.price = price
+        snap.daily_bar.volume = volume
+        return snap
+
+    def test_returns_list_of_strings(self, discovery_scanner):
+        """discover_symbols returns a list of string ticker symbols."""
+        from scripts.market_scanner import _LOW_PRICE_FALLBACK
+        # Will fall back since screener is mocked
+        result = discovery_scanner.discover_symbols()
+        assert isinstance(result, list)
+        assert all(isinstance(s, str) for s in result)
+
+    def test_fallback_on_screener_failure(self, discovery_scanner):
+        """Falls back to curated list when screener API fails."""
+        from scripts.market_scanner import _LOW_PRICE_FALLBACK
+        result = discovery_scanner.discover_symbols()
+        assert result == _LOW_PRICE_FALLBACK[:10]
+
+    def _patch_screener(self, discovery_scanner, candidates, snapshots):
+        """Helper to patch ScreenerClient, request classes, and snapshots."""
+        from unittest.mock import patch
+
+        mock_screener_instance = MagicMock()
+        actives = [MagicMock(symbol=sym) for sym in candidates]
+        mock_screener_instance.get_most_actives.return_value = MagicMock(most_actives=actives)
+        mock_screener_instance.get_market_movers.return_value = MagicMock(gainers=[])
+        discovery_scanner.data_client.get_stock_snapshot.return_value = snapshots
+
+        mock_cls = MagicMock(return_value=mock_screener_instance)
+        # Patch ScreenerClient, MostActivesRequest, MarketMoversRequest, StockSnapshotRequest
+        # since they may be None if alpaca imports failed (missing pytz etc.)
+        return patch.multiple(
+            "scripts.market_scanner",
+            ScreenerClient=mock_cls,
+            MostActivesRequest=MagicMock(),
+            MarketMoversRequest=MagicMock(),
+            StockSnapshotRequest=MagicMock(),
+        )
+
+    def test_filters_by_price_tier1(self, discovery_scanner):
+        """Tier 1 stocks (whole-share affordable) are preferred."""
+        # Budget $10, max_position_pct 5% → whole_share_max = $0.50
+        snapshots = {
+            "CHEAP": self._make_snapshot(0.30, 500_000),          # Tier 1: $0.30 <= $0.50
+            "MID": self._make_snapshot(5.00, 200_000),            # Tier 2: $5.00 <= $10
+            "EXPENSIVE": self._make_snapshot(150.00, 1_000_000),  # Too expensive
+        }
+
+        with self._patch_screener(discovery_scanner, ["CHEAP", "MID", "EXPENSIVE"], snapshots):
+            result = discovery_scanner.discover_symbols()
+
+        assert "CHEAP" in result
+        assert "MID" in result
+        assert "EXPENSIVE" not in result
+
+    def test_tier1_preferred_over_tier2(self, discovery_scanner):
+        """Tier 1 stocks fill first, Tier 2 fills remaining slots."""
+        candidates = [f"T1_{i}" for i in range(5)] + [f"T2_{i}" for i in range(15)]
+
+        snapshots = {}
+        for i in range(5):
+            snapshots[f"T1_{i}"] = self._make_snapshot(0.10 + i * 0.08, 100_000 * (5 - i))
+        for i in range(15):
+            snapshots[f"T2_{i}"] = self._make_snapshot(1.0 + i * 0.5, 50_000 * (15 - i))
+
+        with self._patch_screener(discovery_scanner, candidates, snapshots):
+            result = discovery_scanner.discover_symbols(max_symbols=7)
+
+        assert len(result) == 7
+        # First 5 should be Tier 1 stocks
+        for sym in result[:5]:
+            assert sym.startswith("T1_"), f"{sym} should be Tier 1"
+
+    def test_max_symbols_limit(self, discovery_scanner):
+        """Result never exceeds max_symbols."""
+        candidates = [f"S{i}" for i in range(50)]
+        snapshots = {f"S{i}": self._make_snapshot(0.20, 100_000) for i in range(50)}
+
+        with self._patch_screener(discovery_scanner, candidates, snapshots):
+            result = discovery_scanner.discover_symbols(max_symbols=5)
+
+        assert len(result) <= 5

@@ -30,6 +30,10 @@ The `confidence_threshold` controls how many conditions must align before the bo
 
 **Important:** Aggressiveness controls signal sensitivity only. Risk limits (position size, daily loss, circuit breaker, PDT) are unchanged regardless of aggressiveness level.
 
+### Auto-Discovery
+
+When `discovery_mode` is `auto` and `watchlist` is empty, the bot uses Alpaca's screener API to find the most actively traded stocks within the user's budget. It uses a two-tier hybrid approach: first finding stocks cheap enough to buy whole shares, then filling remaining slots with fractional-share-friendly stocks. The watchlist refreshes hourly.
+
 ### SELL Signal Scoring
 
 - **Momentum and Breakout**: SELL signals use weighted scoring with a 2-of-N gate (same as BUY)

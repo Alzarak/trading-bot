@@ -42,6 +42,11 @@ from scripts.strategies import STRATEGY_REGISTRY
 # ------------------------------------------------------------------
 
 _shutdown_requested: bool = False
+
+# Discovery cache — refreshed hourly, not every 60s scan cycle
+_discovered_watchlist: list[str] = []
+_discovery_timestamp: float = 0.0
+_DISCOVERY_INTERVAL: float = 3600.0  # 1 hour
 ET = ZoneInfo("America/New_York")
 
 
@@ -183,7 +188,15 @@ def scan_and_trade(
         logger.info("scan_and_trade: market closed — skipping cycle")
         return
 
+    global _discovered_watchlist, _discovery_timestamp
     watchlist = config.get("watchlist", [])
+    if not watchlist:
+        # Auto-discover affordable stocks, cached hourly
+        if time.time() - _discovery_timestamp > _DISCOVERY_INTERVAL or not _discovered_watchlist:
+            _discovered_watchlist = scanner.discover_symbols()
+            _discovery_timestamp = time.time()
+            logger.info("Auto-discovered {} symbols: {}", len(_discovered_watchlist), _discovered_watchlist)
+        watchlist = _discovered_watchlist
     logger.info("scan_and_trade: scanning {} symbols", len(watchlist))
 
     for symbol in watchlist:

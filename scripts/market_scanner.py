@@ -17,14 +17,31 @@ from loguru import logger
 # Import alpaca-py conditionally so unit tests can run without it installed
 try:
     from alpaca.data.historical import StockHistoricalDataClient  # noqa: F401
-    from alpaca.data.requests import StockBarsRequest
+    from alpaca.data.historical.screener import ScreenerClient
+    from alpaca.data.requests import (
+        MarketMoversRequest,
+        MostActivesRequest,
+        StockBarsRequest,
+        StockSnapshotRequest,
+    )
     from alpaca.data.timeframe import TimeFrame
 except ImportError:  # pragma: no cover
     StockHistoricalDataClient = None  # type: ignore[assignment,misc]
+    ScreenerClient = None  # type: ignore[assignment,misc]
+    MarketMoversRequest = None  # type: ignore[assignment]
+    MostActivesRequest = None  # type: ignore[assignment]
     StockBarsRequest = None  # type: ignore[assignment]
+    StockSnapshotRequest = None  # type: ignore[assignment]
     TimeFrame = None  # type: ignore[assignment]
 
 ET = ZoneInfo("America/New_York")
+
+# Fallback watchlist for small budgets when screener API is unavailable.
+# These are high-volume, exchange-listed stocks typically under $15.
+_LOW_PRICE_FALLBACK = [
+    "SOFI", "PLTR", "NIO", "GRAB", "RIVN",
+    "LCID", "SNAP", "PINS", "HOOD", "DNA",
+]
 
 # Default strategy parameters — overridden by config["strategy_params"]
 _DEFAULTS: dict = {
@@ -246,6 +263,106 @@ class MarketScanner:
         except Exception as exc:
             logger.error("scan: failed for {}: {}", symbol, exc)
             return pd.DataFrame()
+
+    # ------------------------------------------------------------------
+    # Symbol discovery
+    # ------------------------------------------------------------------
+
+    def discover_symbols(self, max_symbols: int = 10) -> list[str]:
+        """Discover affordable, actively-traded stocks based on budget.
+
+        Uses Alpaca's ScreenerClient to find high-volume stocks, then filters
+        by price using a two-tier hybrid approach:
+          Tier 1: stocks where price <= budget * max_position_pct / 100 (whole shares)
+          Tier 2: stocks where price <= budget (fractional shares)
+        Prefers Tier 1, fills remaining slots from Tier 2.
+
+        Falls back to a curated low-price list if the screener API fails.
+
+        Args:
+            max_symbols: Maximum number of symbols to return.
+
+        Returns:
+            List of ticker symbols sorted by volume within each tier.
+        """
+        if ScreenerClient is None:
+            logger.warning("discover_symbols: ScreenerClient not available — using fallback")
+            return _LOW_PRICE_FALLBACK[:max_symbols]
+
+        budget = float(self.config.get("budget_usd", 100))
+        max_pct = float(self.config.get("max_position_pct", 5.0))
+        whole_share_max = budget * (max_pct / 100)
+        fractional_max = budget
+
+        try:
+            screener = ScreenerClient(
+                api_key=self.data_client._api_key,
+                secret_key=self.data_client._secret_key,
+            )
+
+            # Fetch most active stocks by volume
+            actives = screener.get_most_actives(
+                MostActivesRequest(top=100)
+            )
+            candidates = [s.symbol for s in actives.most_actives]
+
+            # Fetch market movers (gainers have momentum)
+            try:
+                movers = screener.get_market_movers(
+                    MarketMoversRequest(top=50)
+                )
+                candidates += [s.symbol for s in movers.gainers]
+            except Exception as exc:
+                logger.debug("discover_symbols: market movers failed: {}", exc)
+
+            # Deduplicate while preserving order
+            candidates = list(dict.fromkeys(candidates))
+
+            if not candidates:
+                logger.warning("discover_symbols: screener returned no candidates — using fallback")
+                return _LOW_PRICE_FALLBACK[:max_symbols]
+
+            # Get snapshots for price filtering
+            snapshots = self.data_client.get_stock_snapshot(
+                StockSnapshotRequest(symbol_or_symbols=candidates)
+            )
+
+            # Two-tier filtering
+            tier1: list[tuple[str, float, float]] = []
+            tier2: list[tuple[str, float, float]] = []
+            for sym, snap in snapshots.items():
+                price = snap.latest_trade.price if snap.latest_trade else None
+                if not price:
+                    continue
+                vol = snap.daily_bar.volume if snap.daily_bar else 0
+                if price <= whole_share_max:
+                    tier1.append((sym, price, vol))
+                elif price <= fractional_max:
+                    tier2.append((sym, price, vol))
+
+            # Sort each tier by volume (most liquid first)
+            tier1.sort(key=lambda x: x[2], reverse=True)
+            tier2.sort(key=lambda x: x[2], reverse=True)
+
+            # Prefer Tier 1, fill remaining from Tier 2
+            result = [sym for sym, _, _ in tier1[:max_symbols]]
+            if len(result) < max_symbols:
+                remaining = max_symbols - len(result)
+                result += [sym for sym, _, _ in tier2[:remaining]]
+
+            if result:
+                logger.info(
+                    "discover_symbols: found {} symbols (tier1={}, tier2={}, budget=${}, max_price=${})",
+                    len(result), len(tier1), len(tier2), budget, whole_share_max,
+                )
+                return result
+
+            logger.warning("discover_symbols: no affordable stocks found — using fallback")
+            return _LOW_PRICE_FALLBACK[:max_symbols]
+
+        except Exception as exc:
+            logger.error("discover_symbols: screener API failed: {} — using fallback", exc)
+            return _LOW_PRICE_FALLBACK[:max_symbols]
 
     # ------------------------------------------------------------------
     # Market clock

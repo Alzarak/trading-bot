@@ -212,7 +212,7 @@ Use AskUserQuestion to ask:
 
 > "How should the bot find stocks to trade?
 >
-> 1. Auto-discover — the bot scans the market each session for the best opportunities (recommended)
+> 1. Auto-discover — the bot screens for the most actively traded stocks within your budget range each session (recommended)
 > 2. Focused list — give the bot specific tickers to watch, it still analyzes and decides autonomously
 > 3. Both — start with a focused list but also scan for new opportunities"
 
@@ -220,7 +220,7 @@ Store as `discovery_mode`: `"auto"`, `"focused"`, or `"both"`.
 
 **If focused or both:** Ask for tickers (comma-separated, uppercase). Store as `watchlist`. Explain: "These are starting points — the bot will analyze these first but still makes its own trading decisions."
 
-**If auto:** Set `watchlist` to `[]`. Tell the user: "The bot will scan market movers, volume leaders, and sector trends each session to find its own opportunities."
+**If auto:** Set `watchlist` to `[]`. Tell the user: "The bot will find the most actively traded stocks you can afford with your ${budget_usd} budget — it screens by volume and price automatically, preferring stocks you can buy whole shares of and filling in with fractional-share-friendly options if needed. The watchlist refreshes every hour."
 
 ## Final Step — Write Config, .env, and Context
 
