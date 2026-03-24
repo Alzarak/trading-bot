@@ -19,12 +19,13 @@ The pipeline must gate entries by macro regime risk and aggregate multi-source s
 - ✓ Signal/ClaudeRecommendation data contracts — existing models.py
 - ✓ Market data fetch + pandas-ta indicators — existing market_scanner.py
 - ✓ APScheduler loop, client creation, shutdown — existing bot.py
+- ✓ Pipeline data contracts (RegimeState, ExposureDecision, RawSignal, AggregatedSignal) — Phase 1
+- ✓ FMP API client with graceful degradation and caching — Phase 1
+- ✓ Macro regime detection (5 types, 6 cross-asset ratio calculators) — Phase 1
+- ✓ Market top risk scoring (0-100, 6 sub-components, split TTL cache) — Phase 1
+- ✓ Exposure coaching (4 gating rules, configurable thresholds) — Phase 1
 
 ### Active
-
-- [ ] Macro regime detection (concentration/broadening/contraction/inflationary/transitional)
-- [ ] Market top risk scoring (0-100 scale with risk zones)
-- [ ] Exposure coaching (max exposure %, bias, position size multiplier from regime state)
 - [ ] Technical screener with improved scoring (not 2-of-N gate)
 - [ ] Earnings drift screener (FMP-powered, optional)
 - [ ] VCP pattern screener (FMP-powered, optional)
@@ -33,9 +34,6 @@ The pipeline must gate entries by macro regime risk and aggregate multi-source s
 - [ ] ATR-based position sizing with Kelly criterion option
 - [ ] Thesis lifecycle tracking (IDEA→ENTRY_READY→ACTIVE→CLOSED in SQLite)
 - [ ] Signal postmortem and weight feedback on thesis close
-- [ ] FMP API client with caching, rate limiting, graceful degradation
-- [ ] Pipeline config section in config.json
-- [ ] Extended data models (RegimeState, ExposureDecision, RawSignal, AggregatedSignal)
 - [ ] Backward compatibility (strategies key fallback when no pipeline key)
 
 ### Out of Scope
@@ -92,4 +90,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 after initialization*
+*Last updated: 2026-03-24 after Phase 1 completion*
