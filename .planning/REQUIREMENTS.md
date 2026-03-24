@@ -103,50 +103,50 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| FMP-01 | TBD | Pending |
-| FMP-02 | TBD | Pending |
-| FMP-03 | TBD | Pending |
-| REG-01 | TBD | Pending |
-| REG-02 | TBD | Pending |
-| REG-03 | TBD | Pending |
-| REG-04 | TBD | Pending |
-| EXP-01 | TBD | Pending |
-| EXP-02 | TBD | Pending |
-| EXP-03 | TBD | Pending |
-| EXP-04 | TBD | Pending |
-| SCR-01 | TBD | Pending |
-| SCR-02 | TBD | Pending |
-| SCR-03 | TBD | Pending |
-| SCR-04 | TBD | Pending |
-| AGG-01 | TBD | Pending |
-| AGG-02 | TBD | Pending |
-| AGG-03 | TBD | Pending |
-| AGG-04 | TBD | Pending |
-| SIZE-01 | TBD | Pending |
-| SIZE-02 | TBD | Pending |
-| SIZE-03 | TBD | Pending |
-| ANA-01 | TBD | Pending |
-| ANA-02 | TBD | Pending |
-| THESIS-01 | TBD | Pending |
-| THESIS-02 | TBD | Pending |
-| THESIS-03 | TBD | Pending |
-| INT-01 | TBD | Pending |
-| INT-02 | TBD | Pending |
-| INT-03 | TBD | Pending |
-| INT-04 | TBD | Pending |
-| INT-05 | TBD | Pending |
-| POST-01 | TBD | Pending |
-| POST-02 | TBD | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| FMP-01 | Phase 1 | Pending |
+| FMP-02 | Phase 1 | Pending |
+| FMP-03 | Phase 1 | Pending |
+| REG-01 | Phase 1 | Pending |
+| REG-02 | Phase 1 | Pending |
+| REG-03 | Phase 1 | Pending |
+| REG-04 | Phase 1 | Pending |
+| EXP-01 | Phase 1 | Pending |
+| EXP-02 | Phase 1 | Pending |
+| EXP-03 | Phase 1 | Pending |
+| EXP-04 | Phase 1 | Pending |
+| SCR-01 | Phase 2 | Pending |
+| SCR-02 | Phase 2 | Pending |
+| SCR-03 | Phase 2 | Pending |
+| SCR-04 | Phase 2 | Pending |
+| AGG-01 | Phase 2 | Pending |
+| AGG-02 | Phase 2 | Pending |
+| AGG-03 | Phase 2 | Pending |
+| AGG-04 | Phase 2 | Pending |
+| SIZE-01 | Phase 2 | Pending |
+| SIZE-02 | Phase 2 | Pending |
+| SIZE-03 | Phase 2 | Pending |
+| ANA-01 | Phase 3 | Pending |
+| ANA-02 | Phase 3 | Pending |
+| THESIS-01 | Phase 3 | Pending |
+| THESIS-02 | Phase 3 | Pending |
+| THESIS-03 | Phase 3 | Pending |
+| INT-01 | Phase 3 | Pending |
+| INT-02 | Phase 3 | Pending |
+| INT-03 | Phase 3 | Pending |
+| INT-04 | Phase 3 | Pending |
+| INT-05 | Phase 3 | Pending |
+| POST-01 | Phase 4 | Pending |
+| POST-02 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 37 total
-- Mapped to phases: 0
-- Unmapped: 37 ⚠️
+- Mapped to phases: 37
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after initial definition*
+*Last updated: 2026-03-23 after roadmap creation*
