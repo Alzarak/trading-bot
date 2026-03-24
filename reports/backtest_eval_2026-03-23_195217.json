@@ -1,0 +1,65 @@
+{
+  "total_score": 23,
+  "verdict": "Abandon",
+  "dimensions": [
+    {
+      "name": "Sample Size",
+      "score": 20,
+      "max_score": 20
+    },
+    {
+      "name": "Expectancy",
+      "score": 0,
+      "max_score": 20
+    },
+    {
+      "name": "Risk Management",
+      "score": 0,
+      "max_score": 20
+    },
+    {
+      "name": "Robustness",
+      "score": 3,
+      "max_score": 20
+    },
+    {
+      "name": "Execution Realism",
+      "score": 0,
+      "max_score": 20
+    }
+  ],
+  "red_flags": [
+    {
+      "id": "no_slippage_test",
+      "severity": "high",
+      "message": "Slippage/friction not tested — results may not survive real-world execution."
+    },
+    {
+      "id": "excessive_drawdown",
+      "severity": "high",
+      "message": "Max drawdown 96.8% exceeds 50% threshold — catastrophic risk."
+    },
+    {
+      "id": "short_test_period",
+      "severity": "medium",
+      "message": "Only 0 years tested — may miss regime changes (minimum 5 recommended)."
+    },
+    {
+      "id": "negative_expectancy",
+      "severity": "high",
+      "message": "Negative expectancy (-0.012%) — strategy loses money on average."
+    }
+  ],
+  "profit_factor": 0.8870276587456175,
+  "expectancy": -0.0116,
+  "inputs": {
+    "total_trades": 34162,
+    "win_rate": 39.6,
+    "avg_win_pct": 0.23,
+    "avg_loss_pct": 0.17,
+    "max_drawdown_pct": 96.8,
+    "years_tested": 0,
+    "num_parameters": 6,
+    "slippage_tested": false
+  }
+}

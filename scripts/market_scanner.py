@@ -17,22 +17,33 @@ from loguru import logger
 # Import alpaca-py conditionally so unit tests can run without it installed
 try:
     from alpaca.data.historical import StockHistoricalDataClient  # noqa: F401
+    from alpaca.data.historical import CryptoHistoricalDataClient  # noqa: F401
     from alpaca.data.historical.screener import ScreenerClient
     from alpaca.data.requests import (
+        CryptoBarsRequest,
+        CryptoSnapshotRequest,
         MarketMoversRequest,
         MostActivesRequest,
         StockBarsRequest,
         StockSnapshotRequest,
     )
     from alpaca.data.timeframe import TimeFrame
+    from alpaca.trading.enums import AssetClass, AssetStatus
+    from alpaca.trading.requests import GetAssetsRequest
 except ImportError:  # pragma: no cover
     StockHistoricalDataClient = None  # type: ignore[assignment,misc]
+    CryptoHistoricalDataClient = None  # type: ignore[assignment,misc]
     ScreenerClient = None  # type: ignore[assignment,misc]
+    CryptoBarsRequest = None  # type: ignore[assignment]
+    CryptoSnapshotRequest = None  # type: ignore[assignment]
     MarketMoversRequest = None  # type: ignore[assignment]
     MostActivesRequest = None  # type: ignore[assignment]
     StockBarsRequest = None  # type: ignore[assignment]
     StockSnapshotRequest = None  # type: ignore[assignment]
     TimeFrame = None  # type: ignore[assignment]
+    AssetClass = None  # type: ignore[assignment]
+    AssetStatus = None  # type: ignore[assignment]
+    GetAssetsRequest = None  # type: ignore[assignment]
 
 ET = ZoneInfo("America/New_York")
 
@@ -42,6 +53,11 @@ ET = ZoneInfo("America/New_York")
 _LOW_PRICE_FALLBACK = [
     "SOFI", "PLTR", "NIO", "GRAB", "RIVN",
     "LCID", "SNAP", "PINS", "HOOD", "SIRI",
+]
+
+# Fallback crypto watchlist — high-liquidity USD pairs
+_CRYPTO_FALLBACK = [
+    "BTC/USD", "ETH/USD", "SOL/USD", "DOGE/USD", "AVAX/USD",
 ]
 
 # Default strategy parameters — overridden by config["strategy_params"]
@@ -61,15 +77,21 @@ _DEFAULTS: dict = {
 class MarketScanner:
     """Fetches OHLCV bars from Alpaca and computes technical indicators.
 
+    Supports both stocks (via StockHistoricalDataClient) and crypto
+    (via CryptoHistoricalDataClient).  Pass crypto_data_client to enable
+    crypto scanning; omit it to keep stock-only behavior.
+
     Args:
         trading_client: Alpaca TradingClient (or mock) — used for market clock.
-        data_client: Alpaca StockHistoricalDataClient (or mock) — bar fetching.
+        data_client: Alpaca StockHistoricalDataClient (or mock) — stock bar fetching.
         config: Trading configuration dict (from config.json).
+        crypto_data_client: Alpaca CryptoHistoricalDataClient (or mock) — crypto bar fetching.
     """
 
-    def __init__(self, trading_client, data_client, config: dict) -> None:
+    def __init__(self, trading_client, data_client, config: dict, crypto_data_client=None) -> None:
         self.trading_client = trading_client
         self.data_client = data_client
+        self.crypto_data_client = crypto_data_client
         self.config = config
 
         # Extract strategy params with defaults
@@ -198,26 +220,42 @@ class MarketScanner:
     # Bar fetching
     # ------------------------------------------------------------------
 
-    def fetch_bars(self, symbol: str, days_back: int = 60) -> pd.DataFrame:
-        """Fetch OHLCV minute bars from Alpaca IEX feed.
+    def fetch_bars(self, symbol: str, days_back: int = 60, crypto: bool = False) -> pd.DataFrame:
+        """Fetch OHLCV minute bars from Alpaca.
+
+        For stocks, uses the IEX feed via StockHistoricalDataClient.
+        For crypto, uses CryptoHistoricalDataClient (no feed parameter).
 
         Args:
-            symbol: Ticker symbol (e.g. 'AAPL').
+            symbol: Ticker symbol (e.g. 'AAPL' or 'BTC/USD').
             days_back: Number of calendar days of history to fetch.
+            crypto: If True, fetch from the crypto data client.
 
         Returns:
             DataFrame with DatetimeIndex in America/New_York timezone.
         """
-        request = StockBarsRequest(
-            symbol_or_symbols=symbol,
-            timeframe=TimeFrame.Minute,
-            start=datetime.now(ET) - timedelta(days=days_back),
-            end=datetime.now(ET),
-            feed="iex",
-        )
+        if crypto:
+            if self.crypto_data_client is None:
+                raise RuntimeError("crypto_data_client not configured — cannot fetch crypto bars")
+            request = CryptoBarsRequest(
+                symbol_or_symbols=symbol,
+                timeframe=TimeFrame.Minute,
+                start=datetime.now(ET) - timedelta(days=days_back),
+                end=datetime.now(ET),
+            )
+            logger.info("Fetching {} crypto bars for {} ({} days back)", TimeFrame.Minute, symbol, days_back)
+            bars = self.crypto_data_client.get_crypto_bars(request)
+        else:
+            request = StockBarsRequest(
+                symbol_or_symbols=symbol,
+                timeframe=TimeFrame.Minute,
+                start=datetime.now(ET) - timedelta(days=days_back),
+                end=datetime.now(ET),
+                feed="iex",
+            )
+            logger.info("Fetching {} bars for {} ({} days back)", TimeFrame.Minute, symbol, days_back)
+            bars = self.data_client.get_stock_bars(request)
 
-        logger.info("Fetching {} bars for {} ({} days back)", TimeFrame.Minute, symbol, days_back)
-        bars = self.data_client.get_stock_bars(request)
         df = bars.df.reset_index(level=0, drop=True)  # drop symbol from multi-index
 
         # Ensure timezone-aware index
@@ -230,20 +268,21 @@ class MarketScanner:
     # Combined scan
     # ------------------------------------------------------------------
 
-    def scan(self, symbol: str) -> pd.DataFrame:
+    def scan(self, symbol: str, crypto: bool = False) -> pd.DataFrame:
         """Fetch bars and compute all indicators for a symbol.
 
         Returns an empty DataFrame if insufficient bars are available
         (e.g. market closed or new listing with < warmup rows).
 
         Args:
-            symbol: Ticker symbol to scan.
+            symbol: Ticker symbol to scan (e.g. 'AAPL' or 'BTC/USD').
+            crypto: If True, fetch from the crypto data client.
 
         Returns:
             Indicator-enriched, NaN-free DataFrame, or empty DataFrame on error.
         """
         try:
-            df = self.fetch_bars(symbol)
+            df = self.fetch_bars(symbol, crypto=crypto)
             if df.empty:
                 logger.warning("scan: no bars returned for {} — skipping", symbol)
                 return pd.DataFrame()
@@ -275,8 +314,8 @@ class MarketScanner:
         Uses Alpaca's ScreenerClient to find high-volume stocks, then filters
         by price using a two-tier hybrid approach:
           Tier 1: stocks where price <= budget * max_position_pct / 100 (whole shares)
-          Tier 2: stocks where price <= budget (fractional shares)
-        Prefers Tier 1, fills remaining slots from Tier 2.
+          Tier 2: all remaining stocks (fractional shares — Alpaca supports fractions)
+        Prefers Tier 1, fills remaining slots from Tier 2 by volume.
 
         Falls back to a curated low-price list if the screener API fails.
 
@@ -293,7 +332,6 @@ class MarketScanner:
         budget = float(self.config.get("budget_usd", 100))
         max_pct = float(self.config.get("max_position_pct", 5.0))
         whole_share_max = budget * (max_pct / 100)
-        fractional_max = budget
 
         try:
             screener = ScreenerClient(
@@ -329,6 +367,8 @@ class MarketScanner:
             )
 
             # Two-tier filtering
+            # Tier 1: cheap enough for whole shares
+            # Tier 2: everything else (Alpaca supports fractional shares)
             tier1: list[tuple[str, float, float]] = []
             tier2: list[tuple[str, float, float]] = []
             for sym, snap in snapshots.items():
@@ -338,7 +378,7 @@ class MarketScanner:
                 vol = snap.daily_bar.volume if snap.daily_bar else 0
                 if price <= whole_share_max:
                     tier1.append((sym, price, vol))
-                elif price <= fractional_max:
+                else:
                     tier2.append((sym, price, vol))
 
             # Sort each tier by volume (most liquid first)
@@ -376,3 +416,114 @@ class MarketScanner:
         """
         clock = self.trading_client.get_clock()
         return clock.is_open
+
+    # ------------------------------------------------------------------
+    # Crypto symbol discovery
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def is_crypto_symbol(symbol: str) -> bool:
+        """Return True if symbol is a crypto pair (contains '/')."""
+        return "/" in symbol
+
+    @staticmethod
+    def normalize_crypto_symbol(symbol: str) -> str:
+        """Normalize Alpaca crypto symbol to slash notation.
+
+        Alpaca positions may report 'BTCUSD' while orders use 'BTC/USD'.
+        This converts the compact form to the canonical slash form.
+        """
+        if "/" in symbol:
+            return symbol
+        # Common quote currencies — try longest first
+        for quote in ("USDT", "USDC", "USD"):
+            if symbol.endswith(quote):
+                base = symbol[: -len(quote)]
+                if base:
+                    return f"{base}/{quote}"
+        return symbol
+
+    def discover_crypto_symbols(self, max_symbols: int = 10) -> list[str]:
+        """Discover tradable crypto pairs filtered by budget.
+
+        Lists all active CRYPTO assets from Alpaca, filters to USD pairs,
+        fetches snapshots for price data, and applies budget-based filtering
+        using the same two-tier approach as stock discovery.
+
+        Falls back to a curated list if the API call fails.
+
+        Args:
+            max_symbols: Maximum number of symbols to return.
+
+        Returns:
+            List of crypto symbols (e.g. ['BTC/USD', 'ETH/USD']).
+        """
+        if GetAssetsRequest is None or self.crypto_data_client is None:
+            logger.warning("discover_crypto_symbols: crypto client not available — using fallback")
+            return _CRYPTO_FALLBACK[:max_symbols]
+
+        crypto_config = self.config.get("crypto", {})
+        separate_budget = crypto_config.get("separate_budget", False)
+        if separate_budget:
+            budget = float(crypto_config.get("budget_usd", 100))
+        else:
+            budget = float(self.config.get("budget_usd", 100))
+        max_pct = float(self.config.get("max_position_pct", 5.0))
+        whole_unit_max = budget * (max_pct / 100)
+
+        try:
+            # List all active crypto assets
+            assets = self.trading_client.get_all_assets(
+                GetAssetsRequest(asset_class=AssetClass.CRYPTO, status=AssetStatus.ACTIVE)
+            )
+            # Filter to /USD pairs only (skip USDT, BTC pairs for simplicity)
+            candidates = [
+                a.symbol for a in assets
+                if a.tradable and a.symbol.endswith("/USD") and not a.symbol.endswith("USDC/USD")
+            ]
+
+            if not candidates:
+                logger.warning("discover_crypto_symbols: no USD pairs found — using fallback")
+                return _CRYPTO_FALLBACK[:max_symbols]
+
+            # Get snapshots for price filtering
+            snapshots = self.crypto_data_client.get_crypto_snapshot(
+                CryptoSnapshotRequest(symbol_or_symbols=candidates)
+            )
+
+            # Two-tier filtering (same logic as stock discovery)
+            # Tier 1: cheap enough for whole units
+            # Tier 2: everything else (crypto supports fractional quantities)
+            tier1: list[tuple[str, float, float]] = []
+            tier2: list[tuple[str, float, float]] = []
+            for sym, snap in snapshots.items():
+                price = snap.latest_trade.price if snap.latest_trade else None
+                if not price:
+                    continue
+                vol = snap.daily_bar.volume if snap.daily_bar else 0
+                if price <= whole_unit_max:
+                    tier1.append((sym, price, vol))
+                else:
+                    tier2.append((sym, price, vol))
+
+            tier1.sort(key=lambda x: x[2], reverse=True)
+            tier2.sort(key=lambda x: x[2], reverse=True)
+
+            result = [sym for sym, _, _ in tier1[:max_symbols]]
+            if len(result) < max_symbols:
+                remaining = max_symbols - len(result)
+                result += [sym for sym, _, _ in tier2[:remaining]]
+
+            if result:
+                logger.info(
+                    "discover_crypto_symbols: found {} pairs (tier1={}, tier2={}, budget=${})",
+                    len(result), len(tier1), len(tier2), budget,
+                )
+                return result
+
+            logger.warning("discover_crypto_symbols: no affordable pairs found — using fallback")
+            return _CRYPTO_FALLBACK[:max_symbols]
+
+        except Exception as exc:
+            logger.error("discover_crypto_symbols: API failed: {} — using fallback", exc)
+            return _CRYPTO_FALLBACK[:max_symbols]

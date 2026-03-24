@@ -151,7 +151,7 @@ from scripts.notifier import Notifier
 from pathlib import Path
 
 config = json.loads(Path('${BOT_DIR}/config.json').read_text())
-trading_client, data_client = create_clients(config)
+trading_client, data_client, crypto_data_client = create_clients(config)
 state_store = StateStore(Path('${BOT_DIR}/trading.db'))
 audit_logger = AuditLogger(Path('${BOT_DIR}'))
 notifier = Notifier(config)

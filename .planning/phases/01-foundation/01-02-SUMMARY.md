@@ -123,6 +123,13 @@ None - all public methods are fully wired. Phase 2 endpoints (`get_earnings_surp
 - When key present: caching, retry, and rate monitoring all active
 - No blockers for Plan 03
 
+## Self-Check: PASSED
+
+- FOUND: scripts/pipeline/fmp_client.py
+- FOUND: scripts/pipeline/__init__.py
+- FOUND: .planning/phases/01-foundation/01-02-SUMMARY.md
+- FOUND: commits f7ffab7 (chore) and 65bc198 (feat)
+
 ---
 *Phase: 01-foundation*
 *Completed: 2026-03-24*

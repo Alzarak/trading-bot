@@ -17,6 +17,7 @@ try:
         LimitOrderRequest,
         MarketOrderRequest,
         StopLossRequest,
+        StopOrderRequest,
         TakeProfitRequest,
         TrailingStopOrderRequest,
     )
@@ -28,10 +29,11 @@ except ImportError:
     LimitOrderRequest = None  # type: ignore[assignment]
     MarketOrderRequest = None  # type: ignore[assignment]
     StopLossRequest = None  # type: ignore[assignment]
+    StopOrderRequest = None  # type: ignore[assignment]
     TakeProfitRequest = None  # type: ignore[assignment]
     TrailingStopOrderRequest = None  # type: ignore[assignment]
 
-from scripts.models import Signal
+from scripts.models import AssetType, Signal
 
 
 class OrderExecutor:
@@ -123,24 +125,27 @@ class OrderExecutor:
     def submit_market_order(
         self,
         symbol: str,
-        qty: int,
+        qty: int | float,
         side: "OrderSide",
+        time_in_force: "TimeInForce | None" = None,
     ) -> object | None:
         """Submit a market order. Fills immediately at best available price.
 
         Args:
             symbol: Ticker symbol.
-            qty: Number of shares.
+            qty: Number of shares/units.
             side: OrderSide.BUY or OrderSide.SELL.
+            time_in_force: Override TIF (default DAY for stocks, use GTC for crypto).
 
         Returns:
             Alpaca Order on success, None on failure.
         """
+        tif = time_in_force or TimeInForce.DAY
         request = MarketOrderRequest(
             symbol=symbol,
             qty=qty,
             side=side,
-            time_in_force=TimeInForce.DAY,
+            time_in_force=tif,
         )
         logger.info(
             "Submitting market order: {} {} shares of {}",
@@ -151,27 +156,30 @@ class OrderExecutor:
     def submit_limit_order(
         self,
         symbol: str,
-        qty: int,
+        qty: int | float,
         limit_price: float,
         side: "OrderSide",
+        time_in_force: "TimeInForce | None" = None,
     ) -> object | None:
         """Submit a limit order. Fills only at or better than limit_price.
 
         Args:
             symbol: Ticker symbol.
-            qty: Number of shares.
+            qty: Number of shares/units.
             limit_price: Maximum (buy) or minimum (sell) acceptable fill price.
             side: OrderSide.BUY or OrderSide.SELL.
+            time_in_force: Override TIF (default DAY for stocks, use GTC for crypto).
 
         Returns:
             Alpaca Order on success, None on failure.
         """
+        tif = time_in_force or TimeInForce.DAY
         rounded_limit = round(limit_price, 2)
         request = LimitOrderRequest(
             symbol=symbol,
             qty=qty,
             side=side,
-            time_in_force=TimeInForce.DAY,
+            time_in_force=tif,
             limit_price=rounded_limit,
         )
         logger.info(
@@ -183,7 +191,7 @@ class OrderExecutor:
     def submit_bracket_order(
         self,
         symbol: str,
-        qty: int,
+        qty: int | float,
         limit_price: float,
         atr: float,
         side: "OrderSide | None" = None,
@@ -232,7 +240,7 @@ class OrderExecutor:
     def submit_trailing_stop(
         self,
         symbol: str,
-        qty: int,
+        qty: int | float,
         trail_percent: float,
         side: "OrderSide | None" = None,
     ) -> object | None:
@@ -267,6 +275,67 @@ class OrderExecutor:
         return self.risk_manager.submit_with_retry(request, symbol)
 
     # ------------------------------------------------------------------
+    # Crypto-specific order methods
+    # ------------------------------------------------------------------
+
+    def _submit_crypto_entry(
+        self,
+        symbol: str,
+        qty: float,
+        limit_price: float,
+        atr: float,
+    ) -> object | None:
+        """Submit a crypto buy as limit entry + separate stop-loss order.
+
+        Alpaca does not support bracket orders for crypto, so we submit
+        the entry and stop-loss as two independent GTC orders.
+
+        The stop-loss is only submitted after the entry order is accepted.
+
+        Args:
+            symbol: Crypto symbol (e.g. 'BTC/USD').
+            qty: Number of units (supports fractional).
+            limit_price: Entry limit price.
+            atr: Average True Range for stop-loss calculation.
+
+        Returns:
+            Entry Alpaca Order on success, None on failure.
+        """
+        # Submit entry order
+        entry_order = self.submit_limit_order(
+            symbol=symbol,
+            qty=qty,
+            limit_price=limit_price,
+            side=OrderSide.BUY,
+            time_in_force=TimeInForce.GTC,
+        )
+
+        if entry_order is None:
+            return None
+
+        # Submit separate stop-loss (GTC) — only after entry accepted
+        stop_price = self.calculate_stop_price(limit_price, atr)
+        stop_request = StopOrderRequest(
+            symbol=symbol,
+            qty=qty,
+            side=OrderSide.SELL,
+            time_in_force=TimeInForce.GTC,
+            stop_price=stop_price,
+        )
+        logger.info(
+            "Submitting crypto stop-loss: SELL {} of {} @ stop ${:.2f}",
+            qty, symbol, stop_price,
+        )
+        stop_order = self.risk_manager.submit_with_retry(stop_request, symbol)
+        if stop_order is None:
+            logger.warning(
+                "Crypto stop-loss submission failed for {} — position is unprotected!",
+                symbol,
+            )
+
+        return entry_order
+
+    # ------------------------------------------------------------------
     # Main entry point
     # ------------------------------------------------------------------
 
@@ -290,6 +359,7 @@ class OrderExecutor:
             Alpaca Order on success, None if blocked or failed.
         """
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        is_crypto = signal.asset_type == AssetType.CRYPTO
 
         # 1. Circuit breaker
         if self.risk_manager.check_circuit_breaker():
@@ -307,19 +377,22 @@ class OrderExecutor:
             )
             return None
 
-        # 3. PDT limit
-        pdt_status = self.risk_manager.check_pdt_limit(signal.symbol, today_str)
-        if pdt_status == "block":
-            logger.warning(
-                "execute_signal blocked for {} — PDT limit reached",
-                signal.symbol,
-            )
-            return None
+        # 3. PDT limit — does NOT apply to crypto
+        if not is_crypto:
+            pdt_status = self.risk_manager.check_pdt_limit(signal.symbol, today_str)
+            if pdt_status == "block":
+                logger.warning(
+                    "execute_signal blocked for {} — PDT limit reached",
+                    signal.symbol,
+                )
+                return None
 
         # 4. Position sizing
         size_override = getattr(signal, "size_override_pct", None)
+        budget_override = getattr(signal, "budget_override", None)
         qty = self.risk_manager.calculate_position_size(
-            signal.symbol, current_price, size_override
+            signal.symbol, current_price, size_override,
+            budget_override=budget_override,
         )
         if qty == 0:
             logger.warning(
@@ -328,29 +401,40 @@ class OrderExecutor:
             )
             return None
 
-        # Submit appropriate order type based on signal action
+        # Submit appropriate order type based on signal action and asset type
         if signal.action == "BUY":
             logger.info(
                 "Executing BUY signal for {} (strategy={}, confidence={:.2f}): "
-                "{} shares @ ${:.2f}",
-                signal.symbol, signal.strategy, signal.confidence, qty, current_price,
+                "{} {} @ ${:.2f}",
+                signal.symbol, signal.strategy, signal.confidence, qty,
+                "units" if is_crypto else "shares", current_price,
             )
-            order = self.submit_bracket_order(
-                symbol=signal.symbol,
-                qty=qty,
-                limit_price=current_price,
-                atr=signal.atr,
-            )
+            if is_crypto:
+                order = self._submit_crypto_entry(
+                    symbol=signal.symbol,
+                    qty=qty,
+                    limit_price=current_price,
+                    atr=signal.atr,
+                )
+            else:
+                order = self.submit_bracket_order(
+                    symbol=signal.symbol,
+                    qty=qty,
+                    limit_price=current_price,
+                    atr=signal.atr,
+                )
         elif signal.action == "SELL":
             logger.info(
                 "Executing SELL signal for {} (strategy={}, confidence={:.2f}): "
-                "{} shares @ market",
+                "{} {} @ market",
                 signal.symbol, signal.strategy, signal.confidence, qty,
+                "units" if is_crypto else "shares",
             )
             order = self.submit_market_order(
                 symbol=signal.symbol,
                 qty=qty,
                 side=OrderSide.SELL,
+                time_in_force=TimeInForce.GTC if is_crypto else None,
             )
         else:
             logger.debug(

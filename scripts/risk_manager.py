@@ -143,18 +143,24 @@ class RiskManager:
         symbol: str,
         current_price: float,
         size_override_pct: float | None = None,
-    ) -> int:
-        """Return the number of shares to buy, enforcing budget and position caps.
+        budget_override: float | None = None,
+    ) -> int | float:
+        """Return the number of shares/units to buy, enforcing budget and position caps.
 
         Args:
             symbol: Ticker symbol (used for logging).
-            current_price: Current market price per share.
+            current_price: Current market price per share/unit.
             size_override_pct: Claude-provided override percentage (claude_decides mode).
                                Clamped to [50%, 150%] of max_position_pct.
+            budget_override: Use this budget instead of config budget_usd.
+                             Used for crypto when separate_budget is enabled.
 
         Returns:
-            Number of whole shares (0 if allocation is below 1 share).
+            Number of whole shares (int) for stocks, or fractional units (float)
+            for crypto. Returns 0 if allocation is insufficient.
         """
+        is_crypto = "/" in symbol  # crypto symbols use slash notation (BTC/USD)
+
         account = self.client.get_account()
         equity = float(account.equity)
 
@@ -176,8 +182,8 @@ class RiskManager:
 
         position_value = equity * (effective_pct / 100.0)
 
-        # Cap at budget_usd (total across ALL positions, not per-trade)
-        budget = float(self.config.get("budget_usd", equity))
+        # Cap at budget (total across ALL positions, not per-trade)
+        budget = budget_override if budget_override is not None else float(self.config.get("budget_usd", equity))
         current_exposure = self._get_total_exposure()
         remaining_budget = max(budget - current_exposure, 0.0)
 
@@ -196,21 +202,26 @@ class RiskManager:
             )
             position_value = remaining_budget
 
-        shares = math.floor(position_value / current_price)
+        # Both stocks and crypto support fractional quantities on Alpaca.
+        # Crypto: round to 4 decimal places (e.g. 0.0015 BTC)
+        # Stocks: round to 2 decimal places for fractional shares (e.g. 0.33 AAPL)
+        precision = 4 if is_crypto else 2
+        qty = round(position_value / current_price, precision)
+        label = "units" if is_crypto else "shares"
 
-        if shares < 1:
+        if qty <= 0:
             logger.warning(
-                "Calculated 0 shares for {} at ${:.2f} "
-                "(allocation ${:.2f} < price) — skipping",
-                symbol, current_price, position_value,
+                "Calculated 0 {} for {} at ${:.2f} "
+                "(allocation ${:.2f} too small) — skipping",
+                label, symbol, current_price, position_value,
             )
             return 0
 
         logger.info(
-            "Position size for {}: {} shares @ ${:.2f} (value ${:.2f}, {:.1f}% of equity)",
-            symbol, shares, current_price, shares * current_price, effective_pct,
+            "Position size for {}: {} {} @ ${:.2f} (value ${:.2f}, {:.1f}% of equity)",
+            symbol, qty, label, current_price, qty * current_price, effective_pct,
         )
-        return shares
+        return qty
 
     # ------------------------------------------------------------------
     # Position count

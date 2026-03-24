@@ -88,6 +88,7 @@ class ClaudeAnalyzer:
         df: pd.DataFrame,
         strategy_name: str,
         indicator_columns: dict[str, str] | None = None,
+        crypto: bool = False,
     ) -> str:
         """Build a structured analysis prompt from an indicator-enriched DataFrame.
 
@@ -98,13 +99,14 @@ class ClaudeAnalyzer:
           - Explicit analyst-only instruction
 
         Args:
-            symbol: Ticker symbol being analyzed (e.g. 'AAPL').
+            symbol: Ticker symbol being analyzed (e.g. 'AAPL' or 'BTC/USD').
             df: Indicator-enriched DataFrame from MarketScanner.scan().
                 Must contain OHLCV columns plus all indicator columns.
             strategy_name: Name of the active strategy (e.g. 'momentum').
             indicator_columns: Optional dict from MarketScanner.get_indicator_columns()
                 mapping logical names to actual column names.  If None, derived
                 from config strategy_params.
+            crypto: If True, add crypto-specific context to the prompt.
 
         Returns:
             Formatted prompt string ready to send to Claude.
@@ -118,10 +120,21 @@ class ClaudeAnalyzer:
         # Build the indicator summary table
         table_lines = self._build_indicator_table(tail, indicator_columns)
 
+        # Crypto context block
+        crypto_context = ""
+        if crypto:
+            crypto_context = """
+## Asset Context
+
+Asset type: cryptocurrency (24/7 market, no PDT rules, higher volatility expected, no shorting allowed).
+Crypto markets are more volatile than equities — adjust confidence accordingly.
+"""
+
         # Compose the prompt
         prompt = f"""You are analyzing market data for {symbol} using the {strategy_name} strategy.
 
 You are an analyst only. Return a recommendation. Do NOT execute trades.
+{crypto_context}
 
 ## Recent Market Data (last 5 bars)
 

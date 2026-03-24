@@ -222,6 +222,58 @@ Store as `discovery_mode`: `"auto"`, `"focused"`, or `"both"`.
 
 **If auto:** Set `watchlist` to `[]`. Tell the user: "The bot will find the most actively traded stocks you can afford with your ${budget_usd} budget — it screens by volume and price automatically, preferring stocks you can buy whole shares of and filling in with fractional-share-friendly options if needed. The watchlist refreshes every hour."
 
+## Step 10 — Crypto Trading
+
+Use AskUserQuestion to ask:
+
+> "Do you want the bot to also trade cryptocurrency? Crypto trades 24/7 through Alpaca — the bot can scan and trade crypto around the clock, even when the stock market is closed.
+>
+> 1. Yes — enable crypto trading alongside stocks
+> 2. No — stick to stocks only for now"
+
+**If Yes:**
+
+Ask about budget:
+
+> "Should crypto have its own separate budget, or share the stock budget?
+>
+> 1. Separate budget — crypto trades from its own pool so stocks and crypto don't compete for funds
+> 2. Shared budget — both draw from the same ${budget_usd} pool"
+
+Store as `crypto.separate_budget` (true/false).
+
+If separate budget: ask for the crypto budget amount (same options as Step 4 but for crypto). Store as `crypto.budget_usd`.
+
+Ask about crypto watchlist:
+
+> "How should the bot find cryptos to trade?
+>
+> 1. Auto-discover — the bot finds the most traded crypto pairs within your budget (recommended)
+> 2. Specific pairs — give the bot specific crypto pairs to watch (e.g. BTC/USD, ETH/USD)"
+
+If specific: ask for pairs (comma-separated, slash notation like BTC/USD). Store as `crypto.watchlist`.
+If auto-discover: set `crypto.watchlist` to `[]`.
+
+Store all crypto settings:
+- `crypto.enabled`: true
+- `crypto.separate_budget`: true/false
+- `crypto.budget_usd`: amount (or same as budget_usd if shared)
+- `crypto.watchlist`: [] or specific pairs
+- `crypto.scan_interval_seconds`: 300
+
+**If No:**
+
+Store `crypto.enabled = false` with defaults:
+```json
+"crypto": {
+  "enabled": false,
+  "separate_budget": false,
+  "budget_usd": 10,
+  "watchlist": [],
+  "scan_interval_seconds": 300
+}
+```
+
 ## Final Step — Write Config, .env, and Context
 
 All files go to `./trading-bot/` in the user's current project directory.
@@ -236,7 +288,7 @@ Compute derived values from `risk_tolerance`:
 
 Set `autonomy_level` from `involvement_level`: `hands_off`→`full_auto`, `notify`→`notify_only`, `approve`→`approval_required`.
 
-Write the full config to `./trading-bot/config.json` using Bash heredoc (env vars must be shell-expanded). Include all fields: `experience_level`, `involvement_level`, `autonomy_level`, `risk_tolerance`, `max_position_pct`, `max_daily_loss_pct`, `budget_usd`, `paper_trading`, `use_mcp`, `strategies`, `signal_aggressiveness`, `confidence_threshold`, `autonomy_mode`, `discovery_mode`, `watchlist`, `market_hours_only`.
+Write the full config to `./trading-bot/config.json` using Bash heredoc (env vars must be shell-expanded). Include all fields: `experience_level`, `involvement_level`, `autonomy_level`, `risk_tolerance`, `max_position_pct`, `max_daily_loss_pct`, `budget_usd`, `paper_trading`, `use_mcp`, `strategies`, `signal_aggressiveness`, `confidence_threshold`, `autonomy_mode`, `discovery_mode`, `watchlist`, `market_hours_only`, `max_positions`, and the full `crypto` object (`enabled`, `separate_budget`, `budget_usd`, `watchlist`, `scan_interval_seconds`).
 
 **Never store API keys in config.json — keys go in .env only.**
 
@@ -252,6 +304,7 @@ Write `./trading-bot/setup-context.md` — this is the handoff document for the 
 - **Trading setup**: budget, paper/live, MCP enabled/disabled
 - **Strategy plan**: which strategies, params, weights, autonomy mode
 - **Stock discovery**: discovery mode, watchlist (if any)
+- **Crypto trading**: enabled/disabled, separate budget, crypto budget, crypto watchlist, 24/7 scanning
 - **Build instructions**: a clear summary of what the build command should generate based on all the above — what scripts, what behavior, what risk checks, what autonomy level
 
 Write this as structured markdown that the build skill can parse.

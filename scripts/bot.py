@@ -35,6 +35,7 @@ from scripts.order_executor import OrderExecutor
 from scripts.portfolio_tracker import PortfolioTracker
 from scripts.risk_manager import RiskManager
 from scripts.state_store import StateStore
+from scripts.models import AssetType
 from scripts.strategies import STRATEGY_REGISTRY
 
 # ------------------------------------------------------------------
@@ -68,6 +69,10 @@ def _get_confidence_threshold(config: dict) -> float:
 _discovered_watchlist: list[str] = []
 _discovery_timestamp: float = 0.0
 _DISCOVERY_INTERVAL: float = 3600.0  # 1 hour
+
+# Crypto discovery cache (separate from stocks)
+_discovered_crypto_watchlist: list[str] = []
+_crypto_discovery_timestamp: float = 0.0
 ET = ZoneInfo("America/New_York")
 
 
@@ -128,16 +133,18 @@ def load_config() -> dict:
 # ------------------------------------------------------------------
 
 def create_clients(config: dict) -> tuple:
-    """Create and return Alpaca TradingClient and StockHistoricalDataClient.
+    """Create and return Alpaca TradingClient, StockHistoricalDataClient, and CryptoHistoricalDataClient.
 
     API keys are read from environment variables — never hardcoded.
+    The CryptoHistoricalDataClient is always created (lightweight) but only
+    used if crypto trading is enabled in config.
 
     Args:
         config: Trading configuration dict. Uses config["paper_trading"] to
                 set the paper flag on TradingClient.
 
     Returns:
-        Tuple of (TradingClient, StockHistoricalDataClient).
+        Tuple of (TradingClient, StockHistoricalDataClient, CryptoHistoricalDataClient).
 
     Raises:
         ImportError: If alpaca-py is not installed.
@@ -145,7 +152,7 @@ def create_clients(config: dict) -> tuple:
     """
     # Import conditionally for testability
     try:
-        from alpaca.data.historical import StockHistoricalDataClient
+        from alpaca.data.historical import CryptoHistoricalDataClient, StockHistoricalDataClient
         from alpaca.trading.client import TradingClient
     except ImportError as exc:
         raise ImportError(
@@ -162,12 +169,14 @@ def create_clients(config: dict) -> tuple:
         )
 
     paper = config.get("paper_trading", True)
-    logger.info("Creating Alpaca clients (paper={})", paper)
+    crypto_enabled = config.get("crypto", {}).get("enabled", False)
+    logger.info("Creating Alpaca clients (paper={}, crypto={})", paper, crypto_enabled)
 
     trading_client = TradingClient(api_key, secret_key, paper=paper)
     data_client = StockHistoricalDataClient(api_key, secret_key)
+    crypto_data_client = CryptoHistoricalDataClient(api_key, secret_key)
 
-    return trading_client, data_client
+    return trading_client, data_client, crypto_data_client
 
 
 # ------------------------------------------------------------------
@@ -372,6 +381,187 @@ def scan_and_trade(
                 "scan_and_trade: error processing {}: {}",
                 symbol, exc,
             )
+
+
+# ------------------------------------------------------------------
+# Crypto scan-and-trade cycle
+# ------------------------------------------------------------------
+
+
+def scan_and_trade_crypto(
+    scanner: MarketScanner,
+    strategies: list,
+    executor: OrderExecutor,
+    tracker: PortfolioTracker,
+    state_store: StateStore,
+    config: dict,
+) -> None:
+    """Run one crypto scan-and-trade cycle across all crypto watchlist symbols.
+
+    Mirrors scan_and_trade() but with crypto-specific behavior:
+    - No market hours check (crypto trades 24/7)
+    - Uses crypto watchlist from config or auto-discovery
+    - Passes AssetType.CRYPTO through the pipeline
+    - Uses crypto budget when separate_budget is enabled
+    """
+    if _shutdown_requested:
+        logger.info("scan_and_trade_crypto: shutdown requested — skipping cycle")
+        return
+
+    global _discovered_crypto_watchlist, _crypto_discovery_timestamp
+
+    crypto_config = config.get("crypto", {})
+    separate_budget = crypto_config.get("separate_budget", False)
+    if separate_budget:
+        budget = float(crypto_config.get("budget_usd", 100))
+    else:
+        budget = float(config.get("budget_usd", 100))
+
+    min_trade_value = 0.50
+
+    # --- Check crypto budget before full scan ---
+    try:
+        positions = scanner.trading_client.get_all_positions()
+        # Filter to crypto positions only
+        crypto_positions = [p for p in positions if "/" in p.symbol or MarketScanner.is_crypto_symbol(
+            MarketScanner.normalize_crypto_symbol(p.symbol)
+        )]
+        crypto_exposure = sum(abs(float(p.market_value)) for p in crypto_positions)
+        remaining_budget = budget - crypto_exposure
+
+        if remaining_budget < min_trade_value and crypto_positions:
+            logger.info(
+                "scan_and_trade_crypto: budget exhausted (${:.2f} remaining of ${:.2f}). "
+                "Monitoring {} crypto positions for exit signals only.",
+                remaining_budget, budget, len(crypto_positions),
+            )
+            for pos in crypto_positions:
+                symbol = MarketScanner.normalize_crypto_symbol(pos.symbol)
+                try:
+                    df = scanner.scan(symbol, crypto=True)
+                    if df.empty:
+                        continue
+                    current_price = float(df.iloc[-1]["close"])
+                    for strategy_config in strategies:
+                        strategy_name = strategy_config.get("name")
+                        if strategy_name not in STRATEGY_REGISTRY:
+                            continue
+                        strategy = STRATEGY_REGISTRY[strategy_name]()
+                        params = strategy_config.get("params", {})
+                        signal = strategy.generate_signal(df, symbol, params)
+                        signal.asset_type = AssetType.CRYPTO
+                        threshold = _get_confidence_threshold(config)
+                        if signal.action == "SELL" and signal.confidence >= threshold:
+                            logger.info(
+                                "SELL signal for crypto position: {} (confidence={:.2f})",
+                                symbol, signal.confidence,
+                            )
+                            order = executor.execute_signal(signal, current_price)
+                            if order is not None:
+                                state_store.mark_position_closed(symbol)
+                                tracker.log_trade(
+                                    symbol=symbol, action="SELL",
+                                    price=current_price,
+                                    qty=float(getattr(order, "qty", 0)),
+                                    strategy=signal.strategy, order_type="market",
+                                )
+                except Exception as exc:
+                    logger.error("Error scanning crypto position {}: {}", symbol, exc)
+            return
+
+    except Exception as exc:
+        logger.debug("scan_and_trade_crypto: exposure check failed: {} — continuing", exc)
+
+    # --- Full crypto scan cycle ---
+    watchlist = crypto_config.get("watchlist", [])
+    if not watchlist:
+        if time.time() - _crypto_discovery_timestamp > _DISCOVERY_INTERVAL or not _discovered_crypto_watchlist:
+            _discovered_crypto_watchlist = scanner.discover_crypto_symbols()
+            _crypto_discovery_timestamp = time.time()
+            logger.info("Auto-discovered {} crypto symbols: {}", len(_discovered_crypto_watchlist), _discovered_crypto_watchlist)
+        watchlist = _discovered_crypto_watchlist
+
+    # Include held crypto positions in scan
+    try:
+        positions = scanner.trading_client.get_all_positions()
+        for p in positions:
+            sym = MarketScanner.normalize_crypto_symbol(p.symbol)
+            if MarketScanner.is_crypto_symbol(sym) and sym not in watchlist:
+                watchlist.append(sym)
+    except Exception:
+        pass
+
+    logger.info("scan_and_trade_crypto: scanning {} crypto symbols", len(watchlist))
+
+    budget_override = budget if separate_budget else None
+
+    for symbol in watchlist:
+        try:
+            df = scanner.scan(symbol, crypto=True)
+            if df.empty:
+                logger.warning("scan_and_trade_crypto: no data for {} — skipping", symbol)
+                continue
+
+            current_price = float(df.iloc[-1]["close"])
+
+            for strategy_config in strategies:
+                strategy_name = strategy_config.get("name")
+                if strategy_name not in STRATEGY_REGISTRY:
+                    continue
+
+                strategy_class = STRATEGY_REGISTRY[strategy_name]
+                strategy = strategy_class()
+                params = strategy_config.get("params", {})
+                signal = strategy.generate_signal(df, symbol, params)
+                signal.asset_type = AssetType.CRYPTO
+                if budget_override is not None:
+                    signal.budget_override = budget_override
+                threshold = _get_confidence_threshold(config)
+
+                if signal.action == "BUY" and signal.confidence >= threshold:
+                    logger.info(
+                        "BUY signal: {} from {} (confidence={:.2f}, threshold={:.2f})",
+                        symbol, strategy_name, signal.confidence, threshold,
+                    )
+                    order = executor.execute_signal(signal, current_price)
+                    if order is not None:
+                        qty = float(getattr(order, "qty", 0))
+                        state_store.upsert_position(
+                            symbol=symbol, qty=qty,
+                            entry_price=current_price,
+                            stop_price=signal.stop_price,
+                            strategy=signal.strategy,
+                        )
+                        tracker.log_trade(
+                            symbol=symbol, action="BUY",
+                            price=current_price, qty=qty,
+                            strategy=signal.strategy, order_type="limit",
+                        )
+
+                elif signal.action == "SELL" and signal.confidence >= threshold:
+                    logger.info(
+                        "SELL signal: {} from {} (confidence={:.2f}, threshold={:.2f})",
+                        symbol, strategy_name, signal.confidence, threshold,
+                    )
+                    order = executor.execute_signal(signal, current_price)
+                    if order is not None:
+                        qty = float(getattr(order, "qty", 0))
+                        position = state_store.get_position(symbol)
+                        pnl = None
+                        if position is not None:
+                            entry_price = position.get("entry_price", current_price)
+                            pos_qty = position.get("qty", qty)
+                            pnl = (current_price - entry_price) * pos_qty
+                        state_store.mark_position_closed(symbol)
+                        tracker.log_trade(
+                            symbol=symbol, action="SELL",
+                            price=current_price, qty=qty,
+                            strategy=signal.strategy, order_type="market",
+                            pnl=pnl,
+                        )
+
+        except Exception as exc:
+            logger.error("scan_and_trade_crypto: error processing {}: {}", symbol, exc)
 
 
 # ------------------------------------------------------------------
@@ -628,7 +818,7 @@ def main() -> None:
     config = load_config()
 
     # 2. Create clients
-    trading_client, data_client = create_clients(config)
+    trading_client, data_client, crypto_data_client = create_clients(config)
 
     # 3. Initialize StateStore
     data_dir = get_data_dir()
@@ -660,7 +850,7 @@ def main() -> None:
     risk_manager.initialize_session()
 
     # 8. Create scanner, executor, tracker (tracker gets notifier for large trade alerts)
-    scanner = MarketScanner(trading_client, data_client, config)
+    scanner = MarketScanner(trading_client, data_client, config, crypto_data_client=crypto_data_client)
     executor = OrderExecutor(risk_manager, config)
     tracker = PortfolioTracker(trading_client, state_store, config, notifier=notifier)
 
@@ -695,6 +885,24 @@ def main() -> None:
         misfire_grace_time=300,
         coalesce=True,
     )
+
+    # 10b. Crypto scan job (24/7, no market hours check)
+    crypto_config = config.get("crypto", {})
+    if crypto_config.get("enabled", False):
+        crypto_interval = int(crypto_config.get("scan_interval_seconds", 300))
+        scheduler.add_job(
+            func=scan_and_trade_crypto,
+            trigger=IntervalTrigger(seconds=crypto_interval),
+            args=[scanner, strategies, executor, tracker, state_store, config],
+            id="scan_and_trade_crypto",
+            name="Crypto scan and trade cycle (24/7)",
+            misfire_grace_time=30,
+            coalesce=True,
+        )
+        logger.info("Crypto trading enabled — scanning every {}s (24/7)", crypto_interval)
+    else:
+        logger.info("Crypto trading disabled — set crypto.enabled=true in config to activate")
+
     scheduler.start()
     logger.info("Trading bot started. Press Ctrl+C to stop.")
 
