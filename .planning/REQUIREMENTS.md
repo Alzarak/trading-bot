@@ -20,10 +20,10 @@
 
 ### Regime Detection
 
-- [ ] **REG-01**: Macro regime classification into 5 types (concentration/broadening/contraction/inflationary/transitional) using 6 cross-asset ratios
-- [ ] **REG-02**: Market top risk scoring (0-100) with 6 sub-components producing risk zones (green/yellow/orange/red/critical)
-- [ ] **REG-03**: Regime cache with split TTL — hourly for macro regime label, more frequent for top_risk intraday ratios
-- [ ] **REG-04**: Defaults to transitional regime with top_risk=30 when FMP unavailable
+- [x] **REG-01**: Macro regime classification into 5 types (concentration/broadening/contraction/inflationary/transitional) using 6 cross-asset ratios
+- [x] **REG-02**: Market top risk scoring (0-100) with 6 sub-components producing risk zones (green/yellow/orange/red/critical)
+- [x] **REG-03**: Regime cache with split TTL — hourly for macro regime label, more frequent for top_risk intraday ratios
+- [x] **REG-04**: Defaults to transitional regime with top_risk=30 when FMP unavailable
 
 ### Exposure
 
@@ -110,10 +110,10 @@
 | FMP-01 | Phase 1 | Complete |
 | FMP-02 | Phase 1 | Complete |
 | FMP-03 | Phase 1 | Complete |
-| REG-01 | Phase 1 | Pending |
-| REG-02 | Phase 1 | Pending |
-| REG-03 | Phase 1 | Pending |
-| REG-04 | Phase 1 | Pending |
+| REG-01 | Phase 1 | Complete |
+| REG-02 | Phase 1 | Complete |
+| REG-03 | Phase 1 | Complete |
+| REG-04 | Phase 1 | Complete |
 | EXP-01 | Phase 1 | Pending |
 | EXP-02 | Phase 1 | Pending |
 | EXP-03 | Phase 1 | Pending |

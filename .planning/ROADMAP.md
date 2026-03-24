@@ -34,7 +34,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Data models: extend models.py with 4 dataclasses + pipeline package init
 - [x] 01-02-PLAN.md — FMP client: shared FMPClient with graceful degradation, caching, retry
-- [ ] 01-03-PLAN.md — Regime detection: RegimeDetector with macro regime + top risk, split TTL cache
+- [x] 01-03-PLAN.md — Regime detection: RegimeDetector with macro regime + top risk, split TTL cache
 - [ ] 01-04-PLAN.md — Exposure gating: ExposureCoach + config.json pipeline section
 
 ### Phase 2: Signal Pipeline
