@@ -27,10 +27,10 @@
 
 ### Exposure
 
-- [ ] **EXP-01**: ExposureCoach synthesizes RegimeState into ExposureDecision (max exposure %, size multiplier, bias)
-- [ ] **EXP-02**: Block all new BUY signals when top_risk >= 70 (sell-only mode)
-- [ ] **EXP-03**: Halve max_position_pct when regime == contraction
-- [ ] **EXP-04**: Block new entries when exposure_ceiling <= current_exposure
+- [x] **EXP-01**: ExposureCoach synthesizes RegimeState into ExposureDecision (max exposure %, size multiplier, bias)
+- [x] **EXP-02**: Block all new BUY signals when top_risk >= 70 (sell-only mode)
+- [x] **EXP-03**: Halve max_position_pct when regime == contraction
+- [x] **EXP-04**: Block new entries when exposure_ceiling <= current_exposure
 
 ### Screeners
 
@@ -114,10 +114,10 @@
 | REG-02 | Phase 1 | Complete |
 | REG-03 | Phase 1 | Complete |
 | REG-04 | Phase 1 | Complete |
-| EXP-01 | Phase 1 | Pending |
-| EXP-02 | Phase 1 | Pending |
-| EXP-03 | Phase 1 | Pending |
-| EXP-04 | Phase 1 | Pending |
+| EXP-01 | Phase 1 | Complete |
+| EXP-02 | Phase 1 | Complete |
+| EXP-03 | Phase 1 | Complete |
+| EXP-04 | Phase 1 | Complete |
 | SCR-01 | Phase 2 | Pending |
 | SCR-02 | Phase 2 | Pending |
 | SCR-03 | Phase 2 | Pending |

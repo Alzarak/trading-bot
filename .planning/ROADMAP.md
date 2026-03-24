@@ -12,7 +12,7 @@ Replace the failed 2-of-N strategy system with a regime-gated, conviction-scored
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Data contracts, FMP client, regime detection, and exposure gating
+- [x] **Phase 1: Foundation** - Data contracts, FMP client, regime detection, and exposure gating (completed 2026-03-24)
 - [ ] **Phase 2: Signal Pipeline** - Technical screener, FMP screeners, aggregation, and position sizing
 - [ ] **Phase 3: Integration** - Bot wiring, pipeline analyzer, thesis lifecycle, and backward compatibility
 - [ ] **Phase 4: Postmortem** - Signal postmortem and screener weight feedback
@@ -35,7 +35,7 @@ Plans:
 - [x] 01-01-PLAN.md — Data models: extend models.py with 4 dataclasses + pipeline package init
 - [x] 01-02-PLAN.md — FMP client: shared FMPClient with graceful degradation, caching, retry
 - [x] 01-03-PLAN.md — Regime detection: RegimeDetector with macro regime + top risk, split TTL cache
-- [ ] 01-04-PLAN.md — Exposure gating: ExposureCoach + config.json pipeline section
+- [x] 01-04-PLAN.md — Exposure gating: ExposureCoach + config.json pipeline section
 
 ### Phase 2: Signal Pipeline
 **Goal**: The pipeline can scan the watchlist, produce weighted conviction scores from multiple screeners, and calculate ATR-based position sizes ready for order execution
@@ -77,7 +77,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 2/4 | In Progress|  |
+| 1. Foundation | 4/4 | Complete   | 2026-03-24 |
 | 2. Signal Pipeline | 0/TBD | Not started | - |
 | 3. Integration | 0/TBD | Not started | - |
 | 4. Postmortem | 0/TBD | Not started | - |

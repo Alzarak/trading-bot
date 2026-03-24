@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-03-24T01:37:45.826Z"
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-03-24T01:41:53.913Z"
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Plan: 4 of 4
 | Phase 01-foundation P01 | 3 | 2 tasks | 2 files |
 | Phase 01-foundation P02 | 10 | 2 tasks | 3 files |
 | Phase 01-foundation P03 | 25 | 1 tasks | 1 files |
+| Phase 01-foundation P04 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 01-02]: tenacity @retry with reraise=False replaces manual time.sleep(60) — 3 attempts, 4-60s exponential backoff
 - [Phase 01-foundation]: Used SPY as QQQ proxy for distribution_days to avoid extra FMP call; SPY MA proxy for breadth since FMP free tier lacks breadth endpoint
 - [Phase 01-foundation]: Sentiment uses SPY realized volatility as VIX proxy (low vol = complacency = higher top-risk)
+- [Phase 01-foundation]: config.json gitignored by design (generated per-user by /initialize) — pipeline section created on disk but not tracked in git
+- [Phase 01-foundation]: Linear size scaling upper bound uses configurable block_buys_top_risk_above threshold, not hardcoded 69
+- [Phase 01-foundation]: ExposureCoach bias literals are bot-spec: risk_on/neutral/risk_off/SELL_ONLY — reference skill values GROWTH/VALUE/DEFENSIVE/NEUTRAL not used
 
 ### Pending Todos
 
@@ -81,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T01:37:45.816Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-03-24T01:41:53.904Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
