@@ -29,7 +29,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. When top_risk >= 70, a logged ExposureDecision shows bias=SELL_ONLY and new BUY entries are blocked
   4. When regime == contraction, the ExposureDecision position_size_multiplier is 0.5 (half normal size)
   5. All four new dataclasses (RegimeState, ExposureDecision, RawSignal, AggregatedSignal) are importable from models.py without error
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Data models: extend models.py with 4 dataclasses + pipeline package init
+- [ ] 01-02-PLAN.md — FMP client: shared FMPClient with graceful degradation, caching, retry
+- [ ] 01-03-PLAN.md — Regime detection: RegimeDetector with macro regime + top risk, split TTL cache
+- [ ] 01-04-PLAN.md — Exposure gating: ExposureCoach + config.json pipeline section
 
 ### Phase 2: Signal Pipeline
 **Goal**: The pipeline can scan the watchlist, produce weighted conviction scores from multiple screeners, and calculate ATR-based position sizes ready for order execution
@@ -71,7 +77,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/4 | Planned | - |
 | 2. Signal Pipeline | 0/TBD | Not started | - |
 | 3. Integration | 0/TBD | Not started | - |
 | 4. Postmortem | 0/TBD | Not started | - |
