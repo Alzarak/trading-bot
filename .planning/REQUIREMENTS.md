@@ -7,10 +7,10 @@
 
 ### Data Models
 
-- [ ] **DATA-01**: RegimeState dataclass with regime type, confidence, top_risk_score, risk_zone, cache timestamp, and components dict
-- [ ] **DATA-02**: ExposureDecision dataclass with max_exposure_pct, bias, position_size_multiplier, and reason
-- [ ] **DATA-03**: RawSignal dataclass with symbol, action, source, score, confidence, reasoning, entry/stop/atr prices, asset_type, metadata
-- [ ] **DATA-04**: AggregatedSignal dataclass with symbol, action, conviction, sources, agreement_count, contradictions, top_signal, all_signals
+- [x] **DATA-01**: RegimeState dataclass with regime type, confidence, top_risk_score, risk_zone, cache timestamp, and components dict
+- [x] **DATA-02**: ExposureDecision dataclass with max_exposure_pct, bias, position_size_multiplier, and reason
+- [x] **DATA-03**: RawSignal dataclass with symbol, action, source, score, confidence, reasoning, entry/stop/atr prices, asset_type, metadata
+- [x] **DATA-04**: AggregatedSignal dataclass with symbol, action, conviction, sources, agreement_count, contradictions, top_signal, all_signals
 
 ### FMP Client
 
@@ -103,10 +103,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
 | FMP-01 | Phase 1 | Pending |
 | FMP-02 | Phase 1 | Pending |
 | FMP-03 | Phase 1 | Pending |
