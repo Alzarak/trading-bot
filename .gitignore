@@ -26,5 +26,5 @@ TR*/
 .mcp.json
 
 # Plugin runtime data (not committed — lives in CLAUDE_PLUGIN_DATA)
-config.json
+/config.json
 requirements.txt.sha256
