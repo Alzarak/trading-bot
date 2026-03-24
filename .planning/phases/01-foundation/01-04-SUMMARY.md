@@ -112,6 +112,13 @@ None - no external service configuration required. FMP API key is optional; with
 - Phase 2 screeners can consume ExposureDecision.bias and position_size_multiplier
 - config.json pipeline.screeners.technical.enabled=true signals the Phase 2 technical screener is the active entry point
 
+## Self-Check: PASSED
+
+- FOUND: scripts/pipeline/exposure.py
+- FOUND: config.json (on disk; gitignored by design)
+- FOUND: .planning/phases/01-foundation/01-04-SUMMARY.md
+- FOUND: commit d2b9f4d (Task 1 feat commit)
+
 ---
 *Phase: 01-foundation*
 *Completed: 2026-03-24*
