@@ -14,9 +14,9 @@
 
 ### FMP Client
 
-- [ ] **FMP-01**: Shared FMP API client with per-endpoint caching (5-min TTL) and 250/day call counter
-- [ ] **FMP-02**: Graceful degradation — returns None/defaults when no API key present, never raises exceptions
-- [ ] **FMP-03**: Rate limit handling with exponential backoff via tenacity
+- [x] **FMP-01**: Shared FMP API client with per-endpoint caching (5-min TTL) and 250/day call counter
+- [x] **FMP-02**: Graceful degradation — returns None/defaults when no API key present, never raises exceptions
+- [x] **FMP-03**: Rate limit handling with exponential backoff via tenacity
 
 ### Regime Detection
 
@@ -107,9 +107,9 @@
 | DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Complete |
 | DATA-04 | Phase 1 | Complete |
-| FMP-01 | Phase 1 | Pending |
-| FMP-02 | Phase 1 | Pending |
-| FMP-03 | Phase 1 | Pending |
+| FMP-01 | Phase 1 | Complete |
+| FMP-02 | Phase 1 | Complete |
+| FMP-03 | Phase 1 | Complete |
 | REG-01 | Phase 1 | Pending |
 | REG-02 | Phase 1 | Pending |
 | REG-03 | Phase 1 | Pending |

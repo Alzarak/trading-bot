@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-foundation/01-01-PLAN.md
-last_updated: "2026-03-24T01:30:50.441Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-24T01:32:07.125Z"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 ## Current Position
 
 Phase: 01 (foundation) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Plan: 2 of 4
 
 *Updated after each plan completion*
 | Phase 01-foundation P01 | 3 | 2 tasks | 2 files |
+| Phase 01-foundation P02 | 10 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -61,6 +62,9 @@ Recent decisions affecting current work:
 - [Pre-phase]: Regime gating rules — block buys at top_risk >= 70, halve size in contraction
 - [Pre-phase]: ATR-based sizing default; Kelly activates only after 30+ closed theses per screener
 - [Phase 01-01]: Literal type annotations for regime, bias, risk_zone fields per D-10 spec — RawSignal.atr must be absolute dollar units documented in docstring
+- [Phase 01-02]: FMPClient raises no exception when FMP_API_KEY absent — sets _enabled=False and returns None from all methods (D-01/D-02)
+- [Phase 01-02]: requests-cache CachedSession with per-URL TTL (treasury=6h, earnings=24h, prices/screener=5min, calendar=1h) replaces in-memory dict cache
+- [Phase 01-02]: tenacity @retry with reraise=False replaces manual time.sleep(60) — 3 attempts, 4-60s exponential backoff
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T01:30:50.430Z
-Stopped at: Completed 01-foundation/01-01-PLAN.md
+Last session: 2026-03-24T01:32:07.114Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
